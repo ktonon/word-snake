@@ -2,8 +2,6 @@ module Cell exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (class)
-import Char
-import Random exposing (Seed, initialSeed)
 import String
 
 
@@ -15,9 +13,9 @@ type alias Model =
     }
 
 
-init : Model
-init =
-    Model ""
+reset : String -> Model
+reset letter =
+    Model letter
 
 
 
@@ -25,22 +23,14 @@ init =
 
 
 type Msg
-    = Shuffle
-    | NewCode Int
+    = NoOp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg cell =
     case msg of
-        Shuffle ->
-            let
-                gen =
-                    Random.int 65 90
-            in
-                ( model, Random.generate NewCode gen )
-
-        NewCode code ->
-            ( Model (String.fromChar (Char.fromCode code)), Cmd.none )
+        NoOp ->
+            ( cell, Cmd.none )
 
 
 
@@ -48,7 +38,7 @@ update msg model =
 
 
 view : Model -> Html Msg
-view model =
+view cell =
     div [ class "p2 white bg-blue rounded" ]
-        [ div [ class "h1" ] [ text model.letter ]
+        [ div [ class "h1" ] [ text cell.letter ]
         ]

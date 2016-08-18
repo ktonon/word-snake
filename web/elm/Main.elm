@@ -3,8 +3,8 @@ module Main exposing (..)
 import Html exposing (Html, div, button, text)
 import Html.App
 import Html.Attributes exposing (class)
-import Html.Events exposing (onClick)
-import Cell
+import String
+import Board
 
 
 main : Program Never
@@ -22,13 +22,17 @@ main =
 
 
 type alias Model =
-    { cell : Cell.Model
+    { board : Board.Model
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    update Shuffle (Model Cell.init)
+    let
+        letters =
+            String.split "" "hello snake"
+    in
+        ( Model (Board.reset letters), Cmd.none )
 
 
 
@@ -36,26 +40,22 @@ init =
 
 
 type Msg
-    = Shuffle
-    | A Cell.Msg
+    = NoOp
+    | BoardMessage Board.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Shuffle ->
-            let
-                ( _, cellCmd ) =
-                    Cell.update Cell.Shuffle model.cell
-            in
-                ( model, Cmd.map A cellCmd )
+        NoOp ->
+            ( model, Cmd.none )
 
-        A cellMsg ->
+        BoardMessage boardMessage ->
             let
-                ( cellModel, _ ) =
-                    Cell.update cellMsg model.cell
+                ( newBoard, boardCmd ) =
+                    Board.update boardMessage model.board
             in
-                ( { model | cell = cellModel }, Cmd.none )
+                ( { model | board = newBoard }, Cmd.map BoardMessage boardCmd )
 
 
 
@@ -65,6 +65,6 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ class "center" ]
-        [ Html.App.map A (Cell.view model.cell)
-        , button [ class "btn bg-gray rounded", onClick Shuffle ] [ text "Shuffle" ]
+        [ Html.App.map BoardMessage (Board.view model.board)
+        , button [ class "btn bg-gray rounded" ] [ text "Shuffle" ]
         ]
