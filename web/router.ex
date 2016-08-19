@@ -17,5 +17,7 @@ defmodule WordSnake.Router do
 
   scope "/api", WordSnake do
     pipe_through :api
+
+    get "/boards/:id", BoardController, :show
   end
 end

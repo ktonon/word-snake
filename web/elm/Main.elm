@@ -3,7 +3,9 @@ module Main exposing (..)
 import Html exposing (Html, div, button, text)
 import Html.App
 import Html.Attributes exposing (class)
-import String
+import Http
+import Json.Decode exposing ((:=))
+import Task
 import Board
 
 
@@ -28,11 +30,7 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    let
-        letters =
-            String.split "" "hello snake"
-    in
-        ( Model (Board.reset letters), Cmd.none )
+    ( Model (Board.reset []), fetchBoardInit )
 
 
 
@@ -41,6 +39,9 @@ init =
 
 type Msg
     = NoOp
+    | FetchBoardInit
+    | FetchBoardInitOk (List String)
+    | FetchBoardInitFailed Http.Error
     | BoardMessage Board.Msg
 
 
@@ -56,6 +57,26 @@ update msg model =
                     Board.update boardMessage model.board
             in
                 ( { model | board = newBoard }, Cmd.map BoardMessage boardCmd )
+
+        FetchBoardInit ->
+            ( model, fetchBoardInit )
+
+        FetchBoardInitOk init ->
+            ( { model | board = Board.reset init }, Cmd.none )
+
+        FetchBoardInitFailed _ ->
+            ( model, Cmd.none )
+
+
+fetchBoardInit : Cmd Msg
+fetchBoardInit =
+    Http.get boardInit "/api/boards/hi%20snake"
+        |> Task.perform FetchBoardInitFailed FetchBoardInitOk
+
+
+boardInit : Json.Decode.Decoder (List String)
+boardInit =
+    "cells" := (Json.Decode.list (Json.Decode.string))
 
 
 
