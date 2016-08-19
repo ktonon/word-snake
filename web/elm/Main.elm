@@ -70,7 +70,7 @@ update msg model =
 
 fetchBoardInit : Cmd Msg
 fetchBoardInit =
-    Http.get boardInit "/api/boards/hi%20snake"
+    Http.get boardInit "/api/boards/123"
         |> Task.perform FetchBoardInitFailed FetchBoardInitOk
 
 
