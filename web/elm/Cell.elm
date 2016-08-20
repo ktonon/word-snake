@@ -11,6 +11,8 @@ type alias Model =
     { letter : String
     , x : Int
     , y : Int
+    , id : String
+    , adj : List String
     }
 
 

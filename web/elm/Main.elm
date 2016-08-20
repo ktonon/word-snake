@@ -118,10 +118,12 @@ boardInit : Json.Decode.Decoder (List Cell.Model)
 boardInit =
     "cells"
         := (Json.Decode.list
-                (Json.Decode.object3 Cell.Model
+                (Json.Decode.object5 Cell.Model
                     ("letter" := Json.Decode.string)
                     ("x" := Json.Decode.int)
                     ("y" := Json.Decode.int)
+                    ("id" := Json.Decode.string)
+                    ("adj" := (Json.Decode.list Json.Decode.string))
                 )
            )
 
