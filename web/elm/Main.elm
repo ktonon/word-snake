@@ -5,16 +5,19 @@ import Html.App
 import Html.Attributes exposing (class)
 import Http
 import Json.Decode exposing ((:=))
+import Navigation
 import Task
-import Board
+import Routing exposing (Route(..))
+import Board exposing (BoardSeed)
 
 
 main : Program Never
 main =
-    Html.App.program
+    Navigation.program Routing.parser
         { init = init
         , update = update
         , view = view
+        , urlUpdate = urlUpdate
         , subscriptions = \_ -> Sub.none
         }
 
@@ -28,9 +31,32 @@ type alias Model =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( Model (Board.reset []), fetchBoardInit )
+emptyBoard : Model
+emptyBoard =
+    Model (Board.reset [])
+
+
+init : Result String Route -> ( Model, Cmd Msg )
+init result =
+    let
+        route =
+            Routing.routeFromResult result
+    in
+        case route of
+            RandomBoardRoute ->
+                -- TODO: get randomized seed and navigate to it
+                ( emptyBoard, Cmd.none )
+
+            BoardRoute boardSeed ->
+                ( emptyBoard, fetchBoardInit boardSeed )
+
+            NotFoundRoute ->
+                ( Model (Board.reset [ "4", "0", "4" ]), Cmd.none )
+
+
+urlUpdate : Result String Route -> Model -> ( Model, Cmd Msg )
+urlUpdate result model =
+    init result
 
 
 
@@ -39,7 +65,7 @@ init =
 
 type Msg
     = NoOp
-    | FetchBoardInit
+    | FetchBoardInit BoardSeed
     | FetchBoardInitOk (List String)
     | FetchBoardInitFailed Http.Error
     | BoardMessage Board.Msg
@@ -58,8 +84,8 @@ update msg model =
             in
                 ( { model | board = newBoard }, Cmd.map BoardMessage boardCmd )
 
-        FetchBoardInit ->
-            ( model, fetchBoardInit )
+        FetchBoardInit boardSeed ->
+            ( model, fetchBoardInit boardSeed )
 
         FetchBoardInitOk init ->
             ( { model | board = Board.reset init }, Cmd.none )
@@ -68,9 +94,9 @@ update msg model =
             ( model, Cmd.none )
 
 
-fetchBoardInit : Cmd Msg
-fetchBoardInit =
-    Http.get boardInit "/api/boards/123"
+fetchBoardInit : BoardSeed -> Cmd Msg
+fetchBoardInit boardSeed =
+    Http.get boardInit ("/api/boards/" ++ toString boardSeed)
         |> Task.perform FetchBoardInitFailed FetchBoardInitOk
 
 

@@ -8,6 +8,10 @@ import Cell
 -- MODEL
 
 
+type alias BoardSeed =
+    Int
+
+
 type alias Model =
     { cells : List CellRef
     }
