@@ -22,7 +22,7 @@ config :word_snake, WordSnake.Endpoint,
     patterns: [
       ~r{priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$},
       ~r{priv/gettext/.*(po)$},
-      ~r{web/views/.*(ex)$},
+      ~r{web/(channels|controllers|models|views)/.*(ex)$},
       ~r{web/templates/.*(eex)$}
     ]
   ]

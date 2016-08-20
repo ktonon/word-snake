@@ -5,13 +5,22 @@ defmodule WordSnake.BoardController do
     String.to_integer(id)
     |> :random.seed
 
-    letters = 1..20
-    |> Enum.map(fn _ ->
-      <<:random.uniform(26) + 65>>
+    rows = 0..3
+    cols = 0..3
+
+    cells =
+    Enum.map(rows, fn y ->
+      Enum.map(cols, fn x ->
+        %{ "x" => x,
+           "y" => y,
+           "letter" => <<:random.uniform(26) + 64>>
+         }
+      end)
     end)
+    |> List.flatten
 
     render conn, board: %{
-      cells: letters
+      cells: cells
     }
   end
 end

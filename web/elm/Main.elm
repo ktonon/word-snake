@@ -11,6 +11,7 @@ import Random
 import Task
 import Routing exposing (Route(..))
 import Board exposing (BoardSeed)
+import Cell
 
 
 main : Program Never
@@ -48,7 +49,7 @@ init result =
             RandomBoardRoute ->
                 let
                     gen =
-                        Random.int 0 1000000
+                        Random.int 0 1000000000000
                 in
                     ( emptyBoard, Random.generate GotoBoard gen )
 
@@ -56,7 +57,7 @@ init result =
                 ( emptyBoard, fetchBoardInit boardSeed )
 
             NotFoundRoute ->
-                ( Model (Board.reset [ "4", "0", "4" ]), Cmd.none )
+                ( Model (Board.reset []), Cmd.none )
 
 
 urlUpdate : Result String Route -> Model -> ( Model, Cmd Msg )
@@ -73,7 +74,7 @@ type Msg
     | RandomizeBoard
     | GotoBoard BoardSeed
     | FetchBoardInit BoardSeed
-    | FetchBoardInitOk (List String)
+    | FetchBoardInitOk (List Cell.Model)
     | FetchBoardInitFailed Http.Error
     | BoardMessage Board.Msg
 
@@ -113,9 +114,16 @@ fetchBoardInit boardSeed =
         |> Task.perform FetchBoardInitFailed FetchBoardInitOk
 
 
-boardInit : Json.Decode.Decoder (List String)
+boardInit : Json.Decode.Decoder (List Cell.Model)
 boardInit =
-    "cells" := (Json.Decode.list (Json.Decode.string))
+    "cells"
+        := (Json.Decode.list
+                (Json.Decode.object3 Cell.Model
+                    ("letter" := Json.Decode.string)
+                    ("x" := Json.Decode.int)
+                    ("y" := Json.Decode.int)
+                )
+           )
 
 
 
@@ -124,11 +132,11 @@ boardInit =
 
 view : Model -> Html Msg
 view model =
-    div [ class "center" ]
-        [ button
+    div []
+        [ Html.App.map BoardMessage (Board.view model.board)
+        , button
             [ class "btn bg-gray rounded"
             , onClick RandomizeBoard
             ]
             [ text "Shuffle" ]
-        , Html.App.map BoardMessage (Board.view model.board)
         ]

@@ -1,8 +1,7 @@
 module Cell exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (class)
-import String
+import Html.Attributes exposing (class, style)
 
 
 -- MODEL
@@ -10,12 +9,9 @@ import String
 
 type alias Model =
     { letter : String
+    , x : Int
+    , y : Int
     }
-
-
-reset : String -> Model
-reset letter =
-    Model letter
 
 
 
@@ -39,6 +35,16 @@ update msg cell =
 
 view : Model -> Html Msg
 view cell =
-    div [ class "p2 white bg-blue rounded" ]
-        [ div [ class "h1" ] [ text cell.letter ]
+    button
+        [ class "btn white bg-blue rounded"
+        , style
+            [ ( "position", "absolute" )
+            , ( "left", (toString (cell.x * 150)) ++ "px")
+            , ( "top", (toString (cell.y * 150)) ++ "px")
+            , ( "font-size", "64pt" )
+            , ( "margin", "5px" )
+            , ( "width", "140px" )
+            , ( "height", "140px" )
+            ]
         ]
+        [ text cell.letter ]

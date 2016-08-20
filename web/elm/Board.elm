@@ -2,6 +2,7 @@ module Board exposing (..)
 
 import Html exposing (..)
 import Html.App
+import Html.Attributes exposing (class, style)
 import Cell
 
 
@@ -23,15 +24,14 @@ type alias CellRef =
     }
 
 
-reset : List String -> Model
-reset letters =
+reset : List Cell.Model -> Model
+reset cells =
     let
-        cells =
-            letters
-                |> List.map Cell.Model
+        refs =
+            cells
                 |> List.indexedMap CellRef
     in
-        Model cells
+        Model refs
 
 
 
@@ -87,11 +87,17 @@ updateCellRef index msg ref =
 
 view : Model -> Html Msg
 view board =
-    div []
+    div
+        [ class "center"
+        , style
+            [ ( "width", "600px" )
+            , ( "height", "600px" )
+            , ( "position", "relative" )
+            ]
+        ]
         (List.map viewRef board.cells)
 
 
 viewRef : CellRef -> Html Msg
 viewRef ref =
-    div []
-        [ Html.App.map (CellMessage ref.index) (Cell.view ref.cell) ]
+    Html.App.map (CellMessage ref.index) (Cell.view ref.cell)
