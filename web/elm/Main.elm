@@ -1,11 +1,13 @@
 module Main exposing (..)
 
 import Html exposing (Html, div, button, text)
+import Html.Events exposing (onClick)
 import Html.App
 import Html.Attributes exposing (class)
 import Http
 import Json.Decode exposing ((:=))
 import Navigation
+import Random
 import Task
 import Routing exposing (Route(..))
 import Board exposing (BoardSeed)
@@ -44,8 +46,11 @@ init result =
     in
         case route of
             RandomBoardRoute ->
-                -- TODO: get randomized seed and navigate to it
-                ( emptyBoard, Cmd.none )
+                let
+                    gen =
+                        Random.int 0 1000000
+                in
+                    ( emptyBoard, Random.generate GotoBoard gen )
 
             BoardRoute boardSeed ->
                 ( emptyBoard, fetchBoardInit boardSeed )
@@ -65,6 +70,8 @@ urlUpdate result model =
 
 type Msg
     = NoOp
+    | RandomizeBoard
+    | GotoBoard BoardSeed
     | FetchBoardInit BoardSeed
     | FetchBoardInitOk (List String)
     | FetchBoardInitFailed Http.Error
@@ -83,6 +90,12 @@ update msg model =
                     Board.update boardMessage model.board
             in
                 ( { model | board = newBoard }, Cmd.map BoardMessage boardCmd )
+
+        RandomizeBoard ->
+            ( model, Navigation.newUrl "#" )
+
+        GotoBoard boardSeed ->
+            ( model, Navigation.newUrl ("#board/" ++ toString boardSeed) )
 
         FetchBoardInit boardSeed ->
             ( model, fetchBoardInit boardSeed )
@@ -112,6 +125,10 @@ boardInit =
 view : Model -> Html Msg
 view model =
     div [ class "center" ]
-        [ Html.App.map BoardMessage (Board.view model.board)
-        , button [ class "btn bg-gray rounded" ] [ text "Shuffle" ]
+        [ button
+            [ class "btn bg-gray rounded"
+            , onClick RandomizeBoard
+            ]
+            [ text "Shuffle" ]
+        , Html.App.map BoardMessage (Board.view model.board)
         ]
