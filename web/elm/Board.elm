@@ -34,6 +34,13 @@ reset cells =
         Model refs
 
 
+findCells : Model -> String -> List Cell.Model
+findCells board letter =
+    board.cells
+        |> List.filter (\ref -> ref.cell.letter == letter)
+        |> List.map (\ref -> ref.cell)
+
+
 
 -- UPDATE
 
