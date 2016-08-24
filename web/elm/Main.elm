@@ -10,8 +10,8 @@ import Navigation
 import Random
 import Task
 import Routing exposing (Route(..))
-import Board exposing (BoardSeed)
-import Cell
+import Board.Board as Board exposing (BoardSeed)
+import Board.Cell as Cell
 
 
 main : Program Never
@@ -119,10 +119,10 @@ boardInit =
     "cells"
         := (Json.Decode.list
                 (Json.Decode.object5 Cell.Model
+                    ("id" := Json.Decode.string)
                     ("letter" := Json.Decode.string)
                     ("x" := Json.Decode.int)
                     ("y" := Json.Decode.int)
-                    ("id" := Json.Decode.string)
                     ("adj" := (Json.Decode.list Json.Decode.string))
                 )
            )

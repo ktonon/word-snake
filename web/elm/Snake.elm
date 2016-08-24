@@ -1,7 +1,7 @@
 module Snake exposing (..)
 
-import Cell
-import Board exposing (findCells)
+import Board.Cell as Cell
+import Board.Board as Board exposing (findCells)
 
 
 type alias Path =

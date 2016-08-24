@@ -1,4 +1,4 @@
-module Cell exposing (..)
+module Board.Cell exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (class, style)
@@ -8,12 +8,16 @@ import Html.Attributes exposing (class, style)
 
 
 type alias Model =
-    { letter : String
+    { id : Id
+    , letter : String
     , x : Int
     , y : Int
-    , id : String
     , adj : List String
     }
+
+
+type alias Id =
+    String
 
 
 
@@ -41,8 +45,8 @@ view cell =
         [ class "btn white bg-blue rounded"
         , style
             [ ( "position", "absolute" )
-            , ( "left", (toString (cell.x * 150)) ++ "px")
-            , ( "top", (toString (cell.y * 150)) ++ "px")
+            , ( "left", (toString (cell.x * 150)) ++ "px" )
+            , ( "top", (toString (cell.y * 150)) ++ "px" )
             , ( "font-size", "64pt" )
             , ( "margin", "5px" )
             , ( "width", "140px" )

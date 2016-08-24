@@ -3,7 +3,7 @@ module Routing exposing (..)
 import Navigation
 import String
 import UrlParser exposing (..)
-import Board exposing (BoardSeed)
+import Board.Board as Board exposing (BoardSeed)
 
 
 type Route

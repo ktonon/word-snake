@@ -1,9 +1,9 @@
-module Board exposing (..)
+module Board.Board exposing (..)
 
 import Html exposing (..)
 import Html.App
 import Html.Attributes exposing (class, style)
-import Cell
+import Board.Cell as Cell
 
 
 -- MODEL
