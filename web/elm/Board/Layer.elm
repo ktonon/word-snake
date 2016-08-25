@@ -72,7 +72,33 @@ updateCell id msg cell =
         ( newCell, cmd )
 
 
+expand : List Cell.Model -> Model -> List Model
+expand cells layer =
+    cells
+        |> List.map (extend layer)
+        |> List.filter (\l -> not (List.isEmpty l.cells))
 
+
+extend : Model -> Cell.Model -> Model
+extend layer cell =
+    if canExtend layer cell then
+        { layer | cells = List.append layer.cells [ cell ] }
+    else
+        layer
+
+
+canExtend : Model -> Cell.Model -> Bool
+canExtend layer cell =
+    not (List.member cell layer.cells)
+
+
+reIndex : List Model -> List Model
+reIndex layers =
+    layers
+
+
+
+-- TODO: write reIndex ^^^
 -- VIEW
 
 

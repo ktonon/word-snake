@@ -1,48 +1,75 @@
 module Snake exposing (..)
 
 import Board.Cell as Cell
-import Board.Board as Board exposing (findCells)
+import Board.Layer as Layer
 
 
-type alias Path =
-    List Cell.Model
+type alias Model =
+    { layers : List Layer.Model
+    }
 
 
-type alias PossibleCells =
-    List Cell.Model
+reset : Model
+reset =
+    Model []
 
 
-type alias PathSet =
-    List Path
+
+-- UPDATE
 
 
-findPaths : Board.Model -> PathSet -> String -> PathSet
-findPaths board pathSet letter =
+type Msg
+    = LayerMessage Layer.Index Layer.Msg
+    | TryAddCells (List Cell.Model)
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        LayerMessage index layerMessage ->
+            let
+                ( newLayers, layerCmd ) =
+                    model.layers
+                        |> updateLayers index layerMessage
+            in
+                ( { model | layers = newLayers }, Cmd.map (LayerMessage index) layerCmd )
+
+        TryAddCells cells ->
+            ( tryAddCells model cells, Cmd.none )
+
+
+updateLayers : Layer.Index -> Layer.Msg -> List Layer.Model -> ( List Layer.Model, Cmd Layer.Msg )
+updateLayers index msg layers =
     let
-        cells =
-            findCells board letter
+        ( newLayers, cmds ) =
+            layers
+                |> List.map (updateLayer index msg)
+                |> List.unzip
     in
-        List.concatMap (expandPath cells) pathSet
+        ( newLayers, Cmd.batch cmds )
 
 
-expandPath : PossibleCells -> Path -> PathSet
-expandPath cells path =
-    cells
-        |> List.map (extendPath path)
-        |> List.filter (\p -> not (List.isEmpty p))
+updateLayer : Layer.Index -> Layer.Msg -> Layer.Model -> ( Layer.Model, Cmd Layer.Msg )
+updateLayer index msg layer =
+    let
+        ( newLayer, cmd ) =
+            if layer.index == index then
+                Layer.update msg layer
+            else
+                ( layer, Cmd.none )
+    in
+        ( newLayer, cmd )
 
 
-extendPath : Path -> Cell.Model -> Path
-extendPath path cell =
-    if canExtendPath path cell then
-        List.append path [ cell ]
-    else
-        path
-
-
-canExtendPath : Path -> Cell.Model -> Bool
-canExtendPath path cell =
-    List.member cell path
+tryAddCells : Model -> List Cell.Model -> Model
+tryAddCells model cells =
+    let
+        newLayers =
+            model.layers
+                |> List.concatMap (Layer.expand cells)
+                |> Layer.reIndex
+    in
+        { model | layers = newLayers }
 
 
 
