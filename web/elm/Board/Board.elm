@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.App
 import Html.Attributes exposing (class, style)
 import Board.Cell as Cell
+import Board.Layer as Layer
 
 
 -- MODEL
@@ -14,31 +15,18 @@ type alias BoardSeed =
 
 
 type alias Model =
-    { cells : List CellRef
-    }
-
-
-type alias CellRef =
-    { index : Int
-    , cell : Cell.Model
+    { layer : Layer.Model
     }
 
 
 reset : List Cell.Model -> Model
 reset cells =
-    let
-        refs =
-            cells
-                |> List.indexedMap CellRef
-    in
-        Model refs
+    Model (Layer.Model 0 cells)
 
 
 findCells : Model -> String -> List Cell.Model
 findCells board letter =
-    board.cells
-        |> List.filter (\ref -> ref.cell.letter == letter)
-        |> List.map (\ref -> ref.cell)
+    Layer.findCells board.layer letter
 
 
 
@@ -46,46 +34,18 @@ findCells board letter =
 
 
 type Msg
-    = NoOp
-    | CellMessage Int Cell.Msg
+    = LayerMessage Layer.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg board =
     case msg of
-        NoOp ->
-            ( board, Cmd.none )
-
-        CellMessage index cellMessage ->
+        LayerMessage layerMessage ->
             let
-                ( newRefs, cellCmd ) =
-                    board.cells
-                        |> updateCellRefs index cellMessage
+                ( newLayer, layerCmd ) =
+                    Layer.update layerMessage board.layer
             in
-                ( { board | cells = newRefs }, Cmd.map (CellMessage index) cellCmd )
-
-
-updateCellRefs : Int -> Cell.Msg -> List CellRef -> ( List CellRef, Cmd Cell.Msg )
-updateCellRefs index msg refs =
-    let
-        ( newRefs, cmds ) =
-            refs
-                |> List.map (updateCellRef index msg)
-                |> List.unzip
-    in
-        ( newRefs, Cmd.batch cmds )
-
-
-updateCellRef : Int -> Cell.Msg -> CellRef -> ( CellRef, Cmd Cell.Msg )
-updateCellRef index msg ref =
-    let
-        ( cell, cmd ) =
-            if ref.index == index then
-                Cell.update msg ref.cell
-            else
-                ( ref.cell, Cmd.none )
-    in
-        ( CellRef ref.index cell, cmd )
+                ( { board | layer = newLayer }, Cmd.map LayerMessage layerCmd )
 
 
 
@@ -94,17 +54,4 @@ updateCellRef index msg ref =
 
 view : Model -> Html Msg
 view board =
-    div
-        [ class "center"
-        , style
-            [ ( "width", "600px" )
-            , ( "height", "600px" )
-            , ( "position", "relative" )
-            ]
-        ]
-        (List.map viewRef board.cells)
-
-
-viewRef : CellRef -> Html Msg
-viewRef ref =
-    Html.App.map (CellMessage ref.index) (Cell.view ref.cell)
+    div [] [ Html.App.map LayerMessage (Layer.view board.layer) ]

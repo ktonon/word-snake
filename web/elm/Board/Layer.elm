@@ -2,7 +2,6 @@ module Board.Layer exposing (..)
 
 import Html exposing (..)
 import Html.App
-import Html.Attributes exposing (class, style)
 import Board.Cell as Cell
 
 
@@ -10,12 +9,12 @@ import Board.Cell as Cell
 
 
 type alias Model =
-    { index : Int
+    { index : Index
     , cells : List Cell.Model
     }
 
 
-type alias Id =
+type alias Index =
     Int
 
 
@@ -79,14 +78,7 @@ updateCell id msg cell =
 
 view : Model -> Html Msg
 view layer =
-    div
-        [ class "center"
-        , style
-            [ ( "width", "600px" )
-            , ( "height", "600px" )
-            , ( "position", "relative" )
-            ]
-        ]
+    div []
         (List.map cellView layer.cells)
 
 

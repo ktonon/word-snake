@@ -3,7 +3,7 @@ module Main exposing (..)
 import Html exposing (Html, div, button, text)
 import Html.Events exposing (onClick)
 import Html.App
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (class, style)
 import Http
 import Json.Decode exposing ((:=))
 import Navigation
@@ -135,7 +135,15 @@ boardInit =
 view : Model -> Html Msg
 view model =
     div []
-        [ Html.App.map BoardMessage (Board.view model.board)
+        [ div
+            [ class "center"
+            , style
+                [ ( "width", "600px" )
+                , ( "height", "600px" )
+                , ( "position", "relative" )
+                ]
+            ]
+            [ Html.App.map BoardMessage (Board.view model.board) ]
         , button
             [ class "btn bg-gray rounded"
             , onClick RandomizeBoard
