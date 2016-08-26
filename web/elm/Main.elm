@@ -1,13 +1,16 @@
 module Main exposing (..)
 
+import Char
 import Html exposing (Html, div, button, text)
 import Html.Events exposing (onClick)
 import Html.App
 import Html.Attributes exposing (class, style)
 import Http
 import Json.Decode exposing ((:=))
+import Keyboard exposing (KeyCode)
 import Navigation
 import Random
+import String
 import Task
 import Routing exposing (Route(..))
 import Board.Board as Board exposing (BoardSeed)
@@ -22,7 +25,7 @@ main =
         , update = update
         , view = view
         , urlUpdate = urlUpdate
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = subscriptions
         }
 
 
@@ -33,12 +36,14 @@ main =
 type alias Model =
     { board : Board.Model
     , snake : Snake.Model
+    , letter : String
+    , cells : List Cell.Model
     }
 
 
 empty : Model
 empty =
-    Model (Board.reset []) (Snake.reset)
+    Model (Board.reset []) (Snake.reset) "" []
 
 
 init : Result String Route -> ( Model, Cmd Msg )
@@ -79,6 +84,7 @@ type Msg
     | FetchBoardInitFailed Http.Error
     | BoardMessage Board.Msg
     | SnakeMessage Snake.Msg
+    | KeyDown KeyCode
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -113,6 +119,25 @@ update msg model =
             in
                 ( { model | snake = newSnake }, Cmd.map SnakeMessage snakeCmd )
 
+        KeyDown keyCode ->
+            let
+                letter =
+                    keyCode |> Char.fromCode |> String.fromChar
+
+                newCells =
+                    Board.findCells model.board letter
+
+                newSnake =
+                    Snake.tryAddCells model.snake newCells
+            in
+                ( { model
+                    | snake = newSnake
+                    , letter = letter
+                    , cells = newCells
+                  }
+                , Cmd.none
+                )
+
 
 fetchBoardInit : BoardSeed -> Cmd Msg
 fetchBoardInit boardSeed =
@@ -132,6 +157,15 @@ boardInit =
                     ("adj" := (Json.Decode.list Json.Decode.string))
                 )
            )
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Keyboard.downs KeyDown
 
 
 
@@ -157,4 +191,7 @@ view model =
             , onClick RandomizeBoard
             ]
             [ text "Shuffle" ]
+        , Html.App.map SnakeMessage (Snake.debugView model.snake)
+        , div [] [ text ("letter: " ++ model.letter) ]
+        , div [] [ text ("cells: " ++ (model.cells |> List.length |> toString)) ]
         ]

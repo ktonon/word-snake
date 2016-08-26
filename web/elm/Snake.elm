@@ -91,3 +91,18 @@ view model =
 viewLayer : Layer.Model -> Html Msg
 viewLayer layer =
     div [] [ Html.App.map (LayerMessage layer.index) (Layer.view "white bg-blue" layer) ]
+
+
+debugView : Model -> Html Msg
+debugView model =
+    div []
+        ((text ("snakes: " ++ (model.layers |> List.length |> toString)))
+            :: (List.map debugViewLayer model.layers)
+        )
+
+
+debugViewLayer : Layer.Model -> Html Msg
+debugViewLayer layer =
+    div []
+        [ Html.App.map (LayerMessage layer.index) (Layer.debugView layer)
+        ]

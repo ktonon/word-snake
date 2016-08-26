@@ -111,3 +111,13 @@ view extraClass layer =
 cellView : Cell.ExtraClass -> Cell.Model -> Html Msg
 cellView extraClass cell =
     Html.App.map (CellMessage cell.id) (Cell.view extraClass cell)
+
+
+debugView : Model -> Html Msg
+debugView layer =
+    div [] (List.map debugCellView layer.cells)
+
+
+debugCellView : Cell.Model -> Html Msg
+debugCellView cell =
+    Html.App.map (CellMessage cell.id) (Cell.debugView cell)

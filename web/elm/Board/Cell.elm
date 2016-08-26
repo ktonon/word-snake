@@ -58,3 +58,8 @@ view extraClass cell =
             ]
         ]
         [ text cell.letter ]
+
+
+debugView : Model -> Html Msg
+debugView cell =
+    div [] [ text cell.letter ]
