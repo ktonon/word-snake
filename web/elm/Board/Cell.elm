@@ -20,6 +20,10 @@ type alias Id =
     String
 
 
+type alias ExtraClass =
+    String
+
+
 
 -- UPDATE
 
@@ -39,10 +43,10 @@ update msg cell =
 -- VIEW
 
 
-view : Model -> Html Msg
-view cell =
+view : ExtraClass -> Model -> Html Msg
+view extraClass cell =
     button
-        [ class "btn white bg-blue rounded"
+        [ class ("btn rounded " ++ extraClass)
         , style
             [ ( "position", "absolute" )
             , ( "left", (toString (cell.x * 150)) ++ "px" )

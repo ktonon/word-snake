@@ -1,7 +1,13 @@
 module Snake exposing (..)
 
+import Html exposing (..)
+import Html.App
+import Html.Attributes exposing (..)
 import Board.Cell as Cell
 import Board.Layer as Layer
+
+
+-- MODEL
 
 
 type alias Model =
@@ -74,3 +80,14 @@ tryAddCells model cells =
 
 
 -- TODO: check adjacency on canExtendPath
+-- VIEW
+
+
+view : Model -> Html Msg
+view model =
+    div [] (List.map viewLayer model.layers)
+
+
+viewLayer : Layer.Model -> Html Msg
+viewLayer layer =
+    div [] [ Html.App.map (LayerMessage layer.index) (Layer.view "white bg-blue" layer) ]

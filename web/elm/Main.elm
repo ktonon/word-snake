@@ -12,6 +12,7 @@ import Task
 import Routing exposing (Route(..))
 import Board.Board as Board exposing (BoardSeed)
 import Board.Cell as Cell
+import Snake
 
 
 main : Program Never
@@ -31,12 +32,13 @@ main =
 
 type alias Model =
     { board : Board.Model
+    , snake : Snake.Model
     }
 
 
-emptyBoard : Model
-emptyBoard =
-    Model (Board.reset [])
+empty : Model
+empty =
+    Model (Board.reset []) (Snake.reset)
 
 
 init : Result String Route -> ( Model, Cmd Msg )
@@ -51,13 +53,13 @@ init result =
                     gen =
                         Random.int 0 1000000000000
                 in
-                    ( emptyBoard, Random.generate GotoBoard gen )
+                    ( empty, Random.generate GotoBoard gen )
 
             BoardRoute boardSeed ->
-                ( emptyBoard, fetchBoardInit boardSeed )
+                ( empty, fetchBoardInit boardSeed )
 
             NotFoundRoute ->
-                ( Model (Board.reset []), Cmd.none )
+                ( empty, Cmd.none )
 
 
 urlUpdate : Result String Route -> Model -> ( Model, Cmd Msg )
@@ -70,28 +72,18 @@ urlUpdate result model =
 
 
 type Msg
-    = NoOp
-    | RandomizeBoard
+    = RandomizeBoard
     | GotoBoard BoardSeed
     | FetchBoardInit BoardSeed
     | FetchBoardInitOk (List Cell.Model)
     | FetchBoardInitFailed Http.Error
     | BoardMessage Board.Msg
+    | SnakeMessage Snake.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
-
-        BoardMessage boardMessage ->
-            let
-                ( newBoard, boardCmd ) =
-                    Board.update boardMessage model.board
-            in
-                ( { model | board = newBoard }, Cmd.map BoardMessage boardCmd )
-
         RandomizeBoard ->
             ( model, Navigation.newUrl "#" )
 
@@ -106,6 +98,20 @@ update msg model =
 
         FetchBoardInitFailed _ ->
             ( model, Cmd.none )
+
+        BoardMessage boardMessage ->
+            let
+                ( newBoard, boardCmd ) =
+                    Board.update boardMessage model.board
+            in
+                ( { model | board = newBoard }, Cmd.map BoardMessage boardCmd )
+
+        SnakeMessage snakeMessage ->
+            let
+                ( newSnake, snakeCmd ) =
+                    Snake.update snakeMessage model.snake
+            in
+                ( { model | snake = newSnake }, Cmd.map SnakeMessage snakeCmd )
 
 
 fetchBoardInit : BoardSeed -> Cmd Msg
@@ -143,7 +149,9 @@ view model =
                 , ( "position", "relative" )
                 ]
             ]
-            [ Html.App.map BoardMessage (Board.view model.board) ]
+            [ Html.App.map BoardMessage (Board.view model.board)
+            , Html.App.map SnakeMessage (Snake.view model.snake)
+            ]
         , button
             [ class "btn bg-gray rounded"
             , onClick RandomizeBoard

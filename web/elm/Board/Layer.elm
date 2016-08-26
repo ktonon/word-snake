@@ -102,12 +102,12 @@ reIndex layers =
 -- VIEW
 
 
-view : Model -> Html Msg
-view layer =
+view : Cell.ExtraClass -> Model -> Html Msg
+view extraClass layer =
     div []
-        (List.map cellView layer.cells)
+        (List.map (cellView extraClass) layer.cells)
 
 
-cellView : Cell.Model -> Html Msg
-cellView cell =
-    Html.App.map (CellMessage cell.id) (Cell.view cell)
+cellView : Cell.ExtraClass -> Cell.Model -> Html Msg
+cellView extraClass cell =
+    Html.App.map (CellMessage cell.id) (Cell.view extraClass cell)

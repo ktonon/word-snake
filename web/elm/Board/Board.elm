@@ -54,4 +54,4 @@ update msg board =
 
 view : Model -> Html Msg
 view board =
-    div [] [ Html.App.map LayerMessage (Layer.view board.layer) ]
+    div [] [ Html.App.map LayerMessage (Layer.view "blue bg-light-gray" board.layer) ]
