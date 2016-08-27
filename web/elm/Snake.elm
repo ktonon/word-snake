@@ -12,12 +12,13 @@ import Board.Layer as Layer
 
 type alias Model =
     { layers : List Layer.Model
+    , undoList : List (List Layer.Model)
     }
 
 
 reset : Model
 reset =
-    Model []
+    Model [] []
 
 
 
@@ -26,7 +27,6 @@ reset =
 
 type Msg
     = LayerMessage Layer.Index Layer.Msg
-    | TryAddCells (List Cell.Model)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -39,9 +39,6 @@ update msg model =
                         |> updateLayers index layerMessage
             in
                 ( { model | layers = newLayers }, Cmd.map (LayerMessage index) layerCmd )
-
-        TryAddCells cells ->
-            ( tryAddCells model cells, Cmd.none )
 
 
 updateLayers : Layer.Index -> Layer.Msg -> List Layer.Model -> ( List Layer.Model, Cmd Layer.Msg )
@@ -70,12 +67,27 @@ updateLayer index msg layer =
 tryAddCells : Model -> List Cell.Model -> Model
 tryAddCells model cells =
     let
+        layers =
+            if List.isEmpty model.layers then
+                [ Layer.new 0 ]
+            else
+                model.layers
+
         newLayers =
-            model.layers
+            layers
                 |> List.concatMap (Layer.expand cells)
-                |> Layer.reIndex
     in
-        { model | layers = newLayers }
+        if Layer.maxLength (newLayers) > Layer.maxLength (model.layers) then
+            { model
+                | undoList = model.layers :: model.undoList
+                , layers =
+                    (newLayers
+                        |> Layer.keepLongest
+                        |> Layer.reIndex
+                    )
+            }
+        else
+            model
 
 
 

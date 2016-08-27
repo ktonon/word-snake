@@ -24,6 +24,10 @@ type alias ExtraClass =
     String
 
 
+type alias CheckAdjacent =
+    Model -> Maybe Model -> Bool
+
+
 
 -- UPDATE
 
@@ -37,6 +41,16 @@ update msg cell =
     case msg of
         NoOp ->
             ( cell, Cmd.none )
+
+
+isAdjacent : Model -> Maybe Model -> Bool
+isAdjacent cell maybeOther =
+    case maybeOther of
+        Nothing ->
+            True
+
+        Just other ->
+            List.member cell.id other.adj
 
 
 
