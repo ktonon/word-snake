@@ -86,7 +86,7 @@ customStyle dtype cell =
 
         HighlightTail ->
             [ ( "background-color", "rgba(204, 204, 204, 0.3)" )
-            , ( "border", "solid 1px rgba(128, 128, 128, 0.5)" )
+            , ( "border", "dashed 1px rgba(128, 128, 128, 0.5)" )
             , ( "color", "#036" )
             ]
 

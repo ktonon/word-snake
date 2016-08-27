@@ -9,6 +9,7 @@ import Json.Decode exposing ((:=))
 import Keyboard exposing (KeyCode)
 import Navigation
 import Random
+import String
 import Task
 import Routing exposing (Route(..))
 import Board.Board as Board exposing (BoardSeed)
@@ -126,7 +127,7 @@ update msg model =
                             Board.findCells model.board letter
 
                         newSnake =
-                            Snake.tryAddCells model.snake newCells
+                            Snake.tryAddCells model.snake letter newCells
                     in
                         ( { model
                             | snake = newSnake
@@ -181,8 +182,12 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ div
+    div
+        [ class "center"
+        , style [ ( "padding", "50px" ) ]
+        ]
+        [ wordView model.snake.word
+        , div
             [ class "center"
             , style
                 [ ( "width", "600px" )
@@ -198,7 +203,30 @@ view model =
             , onClick RandomizeBoard
             ]
             [ text "Shuffle" ]
-        , Html.App.map SnakeMessage (Snake.debugView model.snake)
-        , div [] [ text ("letter: " ++ model.letter) ]
-        , div [] [ text ("cells: " ++ (model.cells |> List.length |> toString)) ]
         ]
+
+
+wordView : String -> Html Msg
+wordView word =
+    let
+        showWord =
+            if String.isEmpty word then
+                "Start typing..."
+            else
+                word
+
+        color =
+            if String.isEmpty word then
+                "#f8f8f8"
+            else
+                "#369"
+    in
+        div
+            [ class "center"
+            , style
+                [ ( "font-size", "70px" )
+                , ( "border", "dashed 1px #999" )
+                , ( "color", color )
+                ]
+            ]
+            [ text showWord ]

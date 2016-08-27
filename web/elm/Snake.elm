@@ -3,6 +3,7 @@ module Snake exposing (..)
 import Html exposing (..)
 import Html.App
 import Html.Attributes exposing (..)
+import String
 import Board.Cell as Cell
 import Board.Layer as Layer
 
@@ -13,12 +14,13 @@ import Board.Layer as Layer
 type alias Model =
     { layers : List Layer.Model
     , undoList : List (List Layer.Model)
+    , word : String
     }
 
 
 reset : Model
 reset =
-    Model [] []
+    Model [] [] ""
 
 
 
@@ -64,8 +66,8 @@ updateLayer index msg layer =
         ( newLayer, cmd )
 
 
-tryAddCells : Model -> List Cell.Model -> Model
-tryAddCells model cells =
+tryAddCells : Model -> String -> List Cell.Model -> Model
+tryAddCells model letter cells =
     let
         layers =
             if List.isEmpty model.layers then
@@ -85,6 +87,7 @@ tryAddCells model cells =
                         |> Layer.keepLongest
                         |> Layer.reIndex
                     )
+                , word = model.word ++ letter
             }
         else
             model
@@ -95,6 +98,7 @@ undo model =
     { model
         | layers = model.undoList |> List.head |> Maybe.withDefault []
         , undoList = model.undoList |> List.tail |> Maybe.withDefault []
+        , word = model.word |> String.dropRight 1
     }
 
 
