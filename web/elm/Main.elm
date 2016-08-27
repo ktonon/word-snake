@@ -16,6 +16,7 @@ import Board.Board as Board exposing (BoardSeed)
 import Board.Cell as Cell
 import KeyAction exposing (..)
 import Snake
+import WordList
 
 
 main : Program Never
@@ -36,6 +37,7 @@ main =
 type alias Model =
     { board : Board.Model
     , snake : Snake.Model
+    , wordList : WordList.Model
     , letter : String
     , cells : List Cell.Model
     }
@@ -43,7 +45,12 @@ type alias Model =
 
 empty : Model
 empty =
-    Model (Board.reset []) (Snake.reset) "" []
+    Model
+        (Board.reset [])
+        (Snake.reset)
+        (WordList.reset)
+        ""
+        []
 
 
 init : Result String Route -> ( Model, Cmd Msg )
@@ -84,6 +91,7 @@ type Msg
     | FetchBoardInitFailed Http.Error
     | BoardMessage Board.Msg
     | SnakeMessage Snake.Msg
+    | WordListMessage WordList.Msg
     | KeyDown KeyCode
 
 
@@ -119,6 +127,13 @@ update msg model =
             in
                 ( { model | snake = newSnake }, Cmd.map SnakeMessage snakeCmd )
 
+        WordListMessage wordListMessage ->
+            let
+                ( newWordList, wordListCmd ) =
+                    WordList.update wordListMessage model.wordList
+            in
+                ( { model | wordList = newWordList }, Cmd.map WordListMessage wordListCmd )
+
         KeyDown keyCode ->
             case actionFromCode (keyCode) of
                 Letter letter ->
@@ -141,7 +156,25 @@ update msg model =
                     ( { model | snake = Snake.reset }, Cmd.none )
 
                 Commit ->
-                    ( model, Cmd.none )
+                    let
+                        wl =
+                            model.wordList
+
+                        word =
+                            model.snake.word
+
+                        newWordList =
+                            if WordList.canAddWord wl word then
+                                WordList.addWord wl word
+                            else
+                                model.wordList
+                    in
+                        ( { model
+                            | wordList = newWordList
+                            , snake = Snake.reset
+                          }
+                        , Cmd.none
+                        )
 
                 Undo ->
                     ( { model | snake = Snake.undo model.snake }, Cmd.none )
@@ -187,22 +220,29 @@ view model =
         , style [ ( "padding", "50px" ) ]
         ]
         [ wordView model.snake.word
-        , div
-            [ class "center"
-            , style
-                [ ( "width", "600px" )
-                , ( "height", "600px" )
-                , ( "position", "relative" )
-                ]
-            ]
-            [ Html.App.map BoardMessage (Board.view model.board)
-            , Html.App.map SnakeMessage (Snake.view model.snake)
+        , div [ class "clearfix" ]
+            [ div [ class "right" ] [ Html.App.map WordListMessage (WordList.view model.wordList) ]
+            , div [ class "left" ] [ boardView model ]
             ]
         , button
             [ class "btn bg-gray rounded"
             , onClick RandomizeBoard
             ]
             [ text "Shuffle" ]
+        ]
+
+
+boardView : Model -> Html Msg
+boardView model =
+    div
+        [ style
+            [ ( "width", "600px" )
+            , ( "height", "600px" )
+            , ( "position", "relative" )
+            ]
+        ]
+        [ Html.App.map BoardMessage (Board.view model.board)
+        , Html.App.map SnakeMessage (Snake.view model.snake)
         ]
 
 
@@ -226,6 +266,7 @@ wordView word =
             , style
                 [ ( "font-size", "70px" )
                 , ( "border", "dashed 1px #999" )
+                , ( "border-radius", "20px" )
                 , ( "color", color )
                 ]
             ]
