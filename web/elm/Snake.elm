@@ -90,8 +90,15 @@ tryAddCells model cells =
             model
 
 
+undo : Model -> Model
+undo model =
+    { model
+        | layers = model.undoList |> List.head |> Maybe.withDefault []
+        , undoList = model.undoList |> List.tail |> Maybe.withDefault []
+    }
 
--- TODO: check adjacency on canExtendPath
+
+
 -- VIEW
 
 

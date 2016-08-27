@@ -1,6 +1,5 @@
 module Main exposing (..)
 
-import Char
 import Html exposing (Html, div, button, text)
 import Html.Events exposing (onClick)
 import Html.App
@@ -10,11 +9,11 @@ import Json.Decode exposing ((:=))
 import Keyboard exposing (KeyCode)
 import Navigation
 import Random
-import String
 import Task
 import Routing exposing (Route(..))
 import Board.Board as Board exposing (BoardSeed)
 import Board.Cell as Cell
+import KeyAction exposing (..)
 import Snake
 
 
@@ -120,23 +119,31 @@ update msg model =
                 ( { model | snake = newSnake }, Cmd.map SnakeMessage snakeCmd )
 
         KeyDown keyCode ->
-            let
-                letter =
-                    keyCode |> Char.fromCode |> String.fromChar
+            case actionFromCode (keyCode) of
+                Letter letter ->
+                    let
+                        newCells =
+                            Board.findCells model.board letter
 
-                newCells =
-                    Board.findCells model.board letter
+                        newSnake =
+                            Snake.tryAddCells model.snake newCells
+                    in
+                        ( { model
+                            | snake = newSnake
+                            , letter = letter
+                            , cells = newCells
+                          }
+                        , Cmd.none
+                        )
 
-                newSnake =
-                    Snake.tryAddCells model.snake newCells
-            in
-                ( { model
-                    | snake = newSnake
-                    , letter = letter
-                    , cells = newCells
-                  }
-                , Cmd.none
-                )
+                Cancel ->
+                    ( { model | snake = Snake.reset }, Cmd.none )
+
+                Commit ->
+                    ( model, Cmd.none )
+
+                Undo ->
+                    ( { model | snake = Snake.undo model.snake }, Cmd.none )
 
 
 fetchBoardInit : BoardSeed -> Cmd Msg
