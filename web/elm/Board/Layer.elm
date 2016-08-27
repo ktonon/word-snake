@@ -139,15 +139,35 @@ reIndex layers =
 -- VIEW
 
 
-view : Cell.ExtraClass -> Model -> Html Msg
-view extraClass layer =
+type DisplayType
+    = ShowLetters
+    | ShowPath
+
+
+view : DisplayType -> Model -> Html Msg
+view dtype layer =
     div []
-        (List.map (cellView extraClass) layer.cells)
+        (layer.cells
+            |> List.indexedMap (,)
+            |> List.map (cellView dtype)
+        )
 
 
-cellView : Cell.ExtraClass -> Cell.Model -> Html Msg
-cellView extraClass cell =
-    Html.App.map (CellMessage cell.id) (Cell.view extraClass cell)
+cellView : DisplayType -> ( Int, Cell.Model ) -> Html Msg
+cellView dtype ( index, cell ) =
+    let
+        cellType =
+            case dtype of
+                ShowLetters ->
+                    Cell.ShowLetter
+
+                ShowPath ->
+                    if index == 0 then
+                        Cell.HighlightHead
+                    else
+                        Cell.HighlightTail
+    in
+        Html.App.map (CellMessage cell.id) (Cell.view cellType cell)
 
 
 debugView : Model -> Html Msg

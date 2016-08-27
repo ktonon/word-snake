@@ -109,7 +109,7 @@ view model =
 
 viewLayer : Layer.Model -> Html Msg
 viewLayer layer =
-    div [] [ Html.App.map (LayerMessage layer.index) (Layer.view "white bg-blue" layer) ]
+    div [] [ Html.App.map (LayerMessage layer.index) (Layer.view Layer.ShowPath layer) ]
 
 
 debugView : Model -> Html Msg

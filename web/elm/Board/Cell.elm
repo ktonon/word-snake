@@ -20,14 +20,6 @@ type alias Id =
     String
 
 
-type alias ExtraClass =
-    String
-
-
-type alias CheckAdjacent =
-    Model -> Maybe Model -> Bool
-
-
 
 -- UPDATE
 
@@ -57,21 +49,52 @@ isAdjacent cell maybeOther =
 -- VIEW
 
 
-view : ExtraClass -> Model -> Html Msg
-view extraClass cell =
+type DisplayType
+    = ShowLetter
+    | HighlightHead
+    | HighlightTail
+
+
+view : DisplayType -> Model -> Html Msg
+view dtype cell =
     button
-        [ class ("btn rounded " ++ extraClass)
-        , style
-            [ ( "position", "absolute" )
-            , ( "left", (toString (cell.x * 150)) ++ "px" )
-            , ( "top", (toString (cell.y * 150)) ++ "px" )
-            , ( "font-size", "64pt" )
-            , ( "margin", "5px" )
-            , ( "width", "140px" )
-            , ( "height", "140px" )
-            ]
+        [ class ("btn")
+        , style (List.append (commonStyle cell) (customStyle dtype cell))
         ]
         [ text cell.letter ]
+
+
+commonStyle : Model -> List ( String, String )
+commonStyle cell =
+    [ ( "position", "absolute" )
+    , ( "left", (toString (cell.x * 150)) ++ "px" )
+    , ( "top", (toString (cell.y * 150)) ++ "px" )
+    , ( "font-size", "64pt" )
+    , ( "margin", "5px" )
+    , ( "width", "140px" )
+    , ( "height", "140px" )
+    , ( "color", "#036" )
+    , ( "border-radius", "20px" )
+    ]
+
+
+customStyle : DisplayType -> Model -> List ( String, String )
+customStyle dtype cell =
+    case dtype of
+        ShowLetter ->
+            [ ( "color", "#036" ) ]
+
+        HighlightTail ->
+            [ ( "background-color", "rgba(204, 204, 204, 0.3)" )
+            , ( "border", "solid 1px rgba(128, 128, 128, 0.5)" )
+            , ( "color", "#036" )
+            ]
+
+        HighlightHead ->
+            [ ( "background-color", "rgba(153, 204, 255, 0.4)" )
+            , ( "border", "solid 1px #036" )
+            , ( "color", "#036" )
+            ]
 
 
 debugView : Model -> Html Msg
