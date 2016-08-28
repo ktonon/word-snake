@@ -95,8 +95,3 @@ customStyle dtype cell =
             , ( "border", "solid 1px #036" )
             , ( "color", "#036" )
             ]
-
-
-debugView : Model -> Html Msg
-debugView cell =
-    div [] [ text cell.letter ]
