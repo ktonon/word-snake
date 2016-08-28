@@ -23,6 +23,11 @@ reset =
     Model [] [] ""
 
 
+bonus : Model -> Int
+bonus model =
+    List.length model.layers
+
+
 
 -- UPDATE
 

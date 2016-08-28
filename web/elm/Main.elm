@@ -165,7 +165,7 @@ update msg model =
 
                         newWordList =
                             if WordList.canAddWord wl word then
-                                WordList.addWord wl word
+                                WordList.addWord wl (WordList.Word word (Snake.bonus model.snake))
                             else
                                 model.wordList
                     in
@@ -219,7 +219,7 @@ view model =
         [ class "center"
         , style [ ( "padding", "50px" ) ]
         ]
-        [ wordView model.snake.word
+        [ wordView model.snake
         , div [ class "clearfix" ]
             [ div [ class "right" ] [ Html.App.map WordListMessage (WordList.view model.wordList) ]
             , div [ class "left" ] [ boardView model ]
@@ -246,28 +246,45 @@ boardView model =
         ]
 
 
-wordView : String -> Html Msg
-wordView word =
+wordView : Snake.Model -> Html Msg
+wordView snake =
     let
         showWord =
-            if String.isEmpty word then
+            if String.isEmpty snake.word then
                 "Start typing..."
             else
-                word
+                snake.word
 
         color =
-            if String.isEmpty word then
+            if String.isEmpty snake.word then
                 "#f8f8f8"
             else
                 "#369"
     in
-        div
-            [ class "center"
-            , style
-                [ ( "font-size", "70px" )
-                , ( "border", "dashed 1px #999" )
-                , ( "border-radius", "20px" )
-                , ( "color", color )
+        div []
+            [ div
+                [ class "center clearfix"
+                , style
+                    [ ( "font-size", "70px" )
+                    , ( "border", "dashed 1px #999" )
+                    , ( "border-radius", "20px" )
+                    , ( "color", color )
+                    ]
+                ]
+                [ text showWord
+                , div [ class "right", style [ ( "padding-right", "20px" ) ] ]
+                    (bonusView snake)
                 ]
             ]
-            [ text showWord ]
+
+
+bonusView : Snake.Model -> List (Html Msg)
+bonusView snake =
+    let
+        bonus =
+            Snake.bonus snake
+    in
+        if bonus > 1 then
+            [ text ("x" ++ (toString bonus)) ]
+        else
+            []

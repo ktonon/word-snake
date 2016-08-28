@@ -8,7 +8,13 @@ import Html.Attributes exposing (..)
 
 
 type alias Model =
-    { words : List String
+    { words : List Word
+    }
+
+
+type alias Word =
+    { word : String
+    , bonus : Int
     }
 
 
@@ -34,10 +40,14 @@ update msg model =
 
 canAddWord : Model -> String -> Bool
 canAddWord model word =
-    not (List.member word model.words)
+    not
+        (model.words
+            |> List.map (\w -> w.word)
+            |> List.member word
+        )
 
 
-addWord : Model -> String -> Model
+addWord : Model -> Word -> Model
 addWord model word =
     { model | words = word :: model.words }
 
@@ -52,11 +62,19 @@ view model =
         [ style
             [ ( "margin", "30px 0" )
             , ( "font-size", "25px" )
+            , ( "text-align", "right" )
             ]
         ]
         (List.map wordView model.words)
 
 
-wordView : String -> Html Msg
+wordView : Word -> Html Msg
 wordView word =
-    div [] [ text word ]
+    let
+        bonusText =
+            if (word.bonus > 1) then
+                "(x" ++ (toString word.bonus) ++ ") "
+            else
+                ""
+    in
+        div [] [ text (bonusText ++ word.word) ]
