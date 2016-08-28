@@ -1,5 +1,6 @@
 defmodule WordSnake.BoardController do
   use WordSnake.Web, :controller
+  import WordSnake.RandomLetter
 
   def show(conn, %{"id" => id}) do
     String.to_integer(id)
@@ -11,7 +12,7 @@ defmodule WordSnake.BoardController do
     cells =
     Enum.map(rows, fn y ->
       Enum.map(cols, fn x ->
-        %{ "letter" => <<:random.uniform(26) + 64>>,
+        %{ "letter" => random_letter,
            "id" => cell_id(x, y),
            "x" => x,
            "y" => y,
