@@ -5,6 +5,7 @@ import Html.App
 import Html.Attributes exposing (class, style)
 import Board.Cell as Cell
 import Board.Layer as Layer
+import ChildUpdate exposing (updateOne)
 
 
 -- MODEL
@@ -17,6 +18,11 @@ type alias BoardSeed =
 type alias Model =
     { layer : Layer.Model
     }
+
+
+setLayer : Model -> Layer.Model -> Model
+setLayer model =
+    (\x -> { model | layer = x })
 
 
 reset : List Cell.Model -> Model
@@ -40,12 +46,8 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg board =
     case msg of
-        LayerMessage layerMessage ->
-            let
-                ( newLayer, layerCmd ) =
-                    Layer.update layerMessage board.layer
-            in
-                ( { board | layer = newLayer }, Cmd.map LayerMessage layerCmd )
+        LayerMessage cMsg ->
+            updateOne LayerMessage .layer setLayer Layer.update cMsg board
 
 
 

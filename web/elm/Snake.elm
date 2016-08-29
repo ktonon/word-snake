@@ -6,6 +6,7 @@ import Html.Attributes exposing (..)
 import String
 import Board.Cell as Cell
 import Board.Layer as Layer
+import ChildUpdate exposing (updateMany)
 
 
 -- MODEL
@@ -16,6 +17,11 @@ type alias Model =
     , undoList : List (List Layer.Model)
     , word : String
     }
+
+
+setLayers : Model -> List Layer.Model -> Model
+setLayers model =
+    (\x -> { model | layers = x })
 
 
 reset : Model
@@ -39,36 +45,8 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        LayerMessage index layerMessage ->
-            let
-                ( newLayers, layerCmd ) =
-                    model.layers
-                        |> updateLayers index layerMessage
-            in
-                ( { model | layers = newLayers }, Cmd.map (LayerMessage index) layerCmd )
-
-
-updateLayers : Layer.Index -> Layer.Msg -> List Layer.Model -> ( List Layer.Model, Cmd Layer.Msg )
-updateLayers index msg layers =
-    let
-        ( newLayers, cmds ) =
-            layers
-                |> List.map (updateLayer index msg)
-                |> List.unzip
-    in
-        ( newLayers, Cmd.batch cmds )
-
-
-updateLayer : Layer.Index -> Layer.Msg -> Layer.Model -> ( Layer.Model, Cmd Layer.Msg )
-updateLayer index msg layer =
-    let
-        ( newLayer, cmd ) =
-            if layer.index == index then
-                Layer.update msg layer
-            else
-                ( layer, Cmd.none )
-    in
-        ( newLayer, cmd )
+        LayerMessage index cMsg ->
+            updateMany LayerMessage .layers setLayers .index Layer.update index cMsg model
 
 
 tryAddCells : Model -> String -> List Cell.Model -> Model

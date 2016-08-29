@@ -3,6 +3,7 @@ module Board.Layer exposing (..)
 import Html exposing (..)
 import Html.App
 import Board.Cell as Cell
+import ChildUpdate exposing (updateMany)
 
 
 -- MODEL
@@ -16,6 +17,11 @@ type alias Model =
 
 type alias Index =
     Int
+
+
+setCells : Model -> List Cell.Model -> Model
+setCells model =
+    (\x -> { model | cells = x })
 
 
 new : Int -> Model
@@ -40,36 +46,8 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg layer =
     case msg of
-        CellMessage id cellMessage ->
-            let
-                ( newCells, cellCmd ) =
-                    layer.cells
-                        |> updateCells id cellMessage
-            in
-                ( { layer | cells = newCells }, Cmd.map (CellMessage id) cellCmd )
-
-
-updateCells : Cell.Id -> Cell.Msg -> List Cell.Model -> ( List Cell.Model, Cmd Cell.Msg )
-updateCells id msg cells =
-    let
-        ( newCells, cmds ) =
-            cells
-                |> List.map (updateCell id msg)
-                |> List.unzip
-    in
-        ( newCells, Cmd.batch cmds )
-
-
-updateCell : Cell.Id -> Cell.Msg -> Cell.Model -> ( Cell.Model, Cmd Cell.Msg )
-updateCell id msg cell =
-    let
-        ( newCell, cmd ) =
-            if cell.id == id then
-                Cell.update msg cell
-            else
-                ( cell, Cmd.none )
-    in
-        ( newCell, cmd )
+        CellMessage id cMsg ->
+            updateMany CellMessage .cells setCells .id Cell.update id cMsg layer
 
 
 expand : List Cell.Model -> Model -> List Model

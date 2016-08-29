@@ -14,6 +14,7 @@ import Task
 import Routing exposing (Route(..))
 import Board.Board as Board exposing (BoardSeed)
 import Board.Cell as Cell
+import ChildUpdate exposing (updateOne)
 import KeyAction exposing (..)
 import Snake
 import WordList
@@ -38,9 +39,22 @@ type alias Model =
     { board : Board.Model
     , snake : Snake.Model
     , wordList : WordList.Model
-    , letter : String
-    , cells : List Cell.Model
     }
+
+
+setBoard : Model -> Board.Model -> Model
+setBoard model =
+    \x -> { model | board = x }
+
+
+setSnake : Model -> Snake.Model -> Model
+setSnake model =
+    \x -> { model | snake = x }
+
+
+setWordList : Model -> WordList.Model -> Model
+setWordList model =
+    \x -> { model | wordList = x }
 
 
 empty : Model
@@ -49,8 +63,6 @@ empty =
         (Board.reset [])
         (Snake.reset)
         (WordList.reset)
-        ""
-        []
 
 
 init : Result String Route -> ( Model, Cmd Msg )
@@ -89,10 +101,10 @@ type Msg
     | FetchBoardInit BoardSeed
     | FetchBoardInitOk (List Cell.Model)
     | FetchBoardInitFailed Http.Error
+    | KeyDown KeyCode
     | BoardMessage Board.Msg
     | SnakeMessage Snake.Msg
     | WordListMessage WordList.Msg
-    | KeyDown KeyCode
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -113,71 +125,55 @@ update msg model =
         FetchBoardInitFailed _ ->
             ( model, Cmd.none )
 
-        BoardMessage boardMessage ->
-            let
-                ( newBoard, boardCmd ) =
-                    Board.update boardMessage model.board
-            in
-                ( { model | board = newBoard }, Cmd.map BoardMessage boardCmd )
-
-        SnakeMessage snakeMessage ->
-            let
-                ( newSnake, snakeCmd ) =
-                    Snake.update snakeMessage model.snake
-            in
-                ( { model | snake = newSnake }, Cmd.map SnakeMessage snakeCmd )
-
-        WordListMessage wordListMessage ->
-            let
-                ( newWordList, wordListCmd ) =
-                    WordList.update wordListMessage model.wordList
-            in
-                ( { model | wordList = newWordList }, Cmd.map WordListMessage wordListCmd )
-
         KeyDown keyCode ->
-            case actionFromCode (keyCode) of
-                Letter letter ->
-                    let
-                        newCells =
-                            Board.findCells model.board letter
+            keyActionUpdate (actionFromCode keyCode) model
 
-                        newSnake =
-                            Snake.tryAddCells model.snake letter newCells
-                    in
-                        ( { model
-                            | snake = newSnake
-                            , letter = letter
-                            , cells = newCells
-                          }
-                        , Cmd.none
-                        )
+        BoardMessage cMsg ->
+            updateOne BoardMessage .board setBoard Board.update cMsg model
 
-                Cancel ->
-                    ( { model | snake = Snake.reset }, Cmd.none )
+        SnakeMessage cMsg ->
+            updateOne SnakeMessage .snake setSnake Snake.update cMsg model
 
-                Commit ->
-                    let
-                        wl =
-                            model.wordList
+        WordListMessage cMsg ->
+            updateOne WordListMessage .wordList setWordList WordList.update cMsg model
 
-                        word =
-                            model.snake.word
 
-                        newWordList =
-                            if WordList.canAddWord wl word then
-                                WordList.addWord wl (WordList.Word word (Snake.bonus model.snake))
-                            else
-                                model.wordList
-                    in
-                        ( { model
-                            | wordList = newWordList
-                            , snake = Snake.reset
-                          }
-                        , Cmd.none
-                        )
+keyActionUpdate : KeyAction -> Model -> ( Model, Cmd Msg )
+keyActionUpdate keyAction model =
+    case keyAction of
+        Letter letter ->
+            ( setSnake model
+                (letter
+                    |> Board.findCells model.board
+                    |> Snake.tryAddCells model.snake letter
+                )
+            , Cmd.none
+            )
 
-                Undo ->
-                    ( { model | snake = Snake.undo model.snake }, Cmd.none )
+        Cancel ->
+            ( setSnake model Snake.reset, Cmd.none )
+
+        Commit ->
+            let
+                word =
+                    model.snake.word
+
+                newWordList =
+                    if WordList.canAddWord model.wordList word then
+                        WordList.Word word (Snake.bonus model.snake)
+                            |> WordList.addWord model.wordList
+                    else
+                        model.wordList
+            in
+                ( { model
+                    | wordList = newWordList
+                    , snake = Snake.reset
+                  }
+                , Cmd.none
+                )
+
+        Undo ->
+            ( setSnake model (Snake.undo model.snake), Cmd.none )
 
 
 fetchBoardInit : BoardSeed -> Cmd Msg
