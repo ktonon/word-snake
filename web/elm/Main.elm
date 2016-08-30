@@ -14,7 +14,6 @@ import Task
 import Routing exposing (Route(..))
 import Board.Board as Board exposing (BoardSeed)
 import Board.Cell as Cell
-import ChildUpdate exposing (updateOne)
 import KeyAction exposing (..)
 import Snake
 import WordList
@@ -42,19 +41,9 @@ type alias Model =
     }
 
 
-setBoard : Model -> Board.Model -> Model
-setBoard model =
-    \x -> { model | board = x }
-
-
 setSnake : Model -> Snake.Model -> Model
 setSnake model =
     \x -> { model | snake = x }
-
-
-setWordList : Model -> WordList.Model -> Model
-setWordList model =
-    \x -> { model | wordList = x }
 
 
 empty : Model
@@ -129,13 +118,13 @@ update msg model =
             keyActionUpdate (actionFromCode keyCode) model
 
         BoardMessage cMsg ->
-            updateOne BoardMessage .board setBoard Board.update cMsg model
+            Board.updateOne BoardMessage cMsg model
 
         SnakeMessage cMsg ->
-            updateOne SnakeMessage .snake setSnake Snake.update cMsg model
+            Snake.updateOne SnakeMessage cMsg model
 
         WordListMessage cMsg ->
-            updateOne WordListMessage .wordList setWordList WordList.update cMsg model
+            WordList.updateOne WordListMessage cMsg model
 
 
 keyActionUpdate : KeyAction -> Model -> ( Model, Cmd Msg )

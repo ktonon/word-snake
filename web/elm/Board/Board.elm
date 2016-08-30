@@ -20,11 +20,6 @@ type alias Model =
     }
 
 
-setLayer : Model -> Layer.Model -> Model
-setLayer model =
-    (\x -> { model | layer = x })
-
-
 reset : List Cell.Model -> Model
 reset cells =
     Model (Layer.Model 0 cells)
@@ -33,6 +28,19 @@ reset cells =
 findCells : Model -> String -> List Cell.Model
 findCells board letter =
     Layer.findCells board.layer letter
+
+
+
+-- UPDATE FOR PARENT
+
+
+type alias HasOne model =
+    { model | board : Model }
+
+
+updateOne : (Msg -> msg) -> Msg -> HasOne m -> ( HasOne m, Cmd msg )
+updateOne =
+    ChildUpdate.updateOne update .board (\m x -> { m | board = x })
 
 
 
@@ -47,7 +55,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg board =
     case msg of
         LayerMessage cMsg ->
-            updateOne LayerMessage .layer setLayer Layer.update cMsg board
+            Layer.updateOne LayerMessage cMsg board
 
 
 

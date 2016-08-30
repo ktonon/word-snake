@@ -3,7 +3,7 @@ module Board.Layer exposing (..)
 import Html exposing (..)
 import Html.App
 import Board.Cell as Cell
-import ChildUpdate exposing (updateMany)
+import ChildUpdate
 
 
 -- MODEL
@@ -19,11 +19,6 @@ type alias Index =
     Int
 
 
-setCells : Model -> List Cell.Model -> Model
-setCells model =
-    (\x -> { model | cells = x })
-
-
 new : Int -> Model
 new index =
     Model index []
@@ -33,6 +28,28 @@ findCells : Model -> String -> List Cell.Model
 findCells layer letter =
     layer.cells
         |> List.filter (\cell -> cell.letter == letter)
+
+
+
+-- UPDATE FOR PARENT
+
+
+type alias HasOne model =
+    { model | layer : Model }
+
+
+type alias HasMany model =
+    { model | layers : List Model }
+
+
+updateOne : (Msg -> msg) -> Msg -> HasOne m -> ( HasOne m, Cmd msg )
+updateOne =
+    ChildUpdate.updateOne update .layer (\m x -> { m | layer = x })
+
+
+updateMany : (Index -> Msg -> msg) -> Index -> Msg -> HasMany m -> ( HasMany m, Cmd msg )
+updateMany =
+    ChildUpdate.updateMany update .index .layers (\m x -> { m | layers = x })
 
 
 
@@ -47,7 +64,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg layer =
     case msg of
         CellMessage id cMsg ->
-            updateMany CellMessage .cells setCells .id Cell.update id cMsg layer
+            Cell.updateMany CellMessage id cMsg layer
 
 
 expand : List Cell.Model -> Model -> List Model

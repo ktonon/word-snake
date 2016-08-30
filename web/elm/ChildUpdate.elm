@@ -14,24 +14,24 @@ relationship as follows:
     type Msg
         = WidgetMessage Widget.Msg
 
-Use `Child.update` to delegate updates to the child `update` function:
+Use `updateOne` to delegate updates to the child `update` function:
 
     update : Msg -> Model -> ( Model, Cmd Msg )
     update msg model =
         WidgetMessage cMsg->
-            Child.update WidgetMessage .widget setWidget Widget.update cMsg model
+            updateOne Widget.update .widget setWidget WidgetMessage cMsg model
 -}
 
 
 updateOne :
-    (childMsg -> msg)
+    (childMsg -> childModel -> ( childModel, Cmd childMsg ))
     -> (model -> childModel)
     -> (model -> childModel -> model)
-    -> (childMsg -> childModel -> ( childModel, Cmd childMsg ))
+    -> (childMsg -> msg)
     -> childMsg
     -> model
     -> ( model, Cmd msg )
-updateOne msgMap getter setter childUpdate childMsg model =
+updateOne childUpdate getter setter msgMap childMsg model =
     let
         ( newChild, childCmd ) =
             childUpdate childMsg (getter model)
@@ -39,17 +39,38 @@ updateOne msgMap getter setter childUpdate childMsg model =
         ( setter model newChild, Cmd.map msgMap childCmd )
 
 
+{-| Delegates update messages to many children. Given a one-to-many parent to
+child relationship as follows:
+
+    type alias Model =
+        { widgets : List Widget.Model
+        }
+
+    setWidgets : Model -> List Widget.Model -> Model
+    setWidgets model =
+        \x -> { model | widgets = x }
+
+    type Msg
+        = WidgetMessage Widget.Id Widget.Msg
+
+Use `updateMany` to delegate updates to the child `update` function:
+
+    update : Msg -> Model -> ( Model, Cmd Msg )
+    update msg model =
+        WidgetMessage id cMsg->
+            updateMany Widget.update .id .widgets setWidgets WidgetMessage id cMsg model
+-}
 updateMany :
-    (childId -> childMsg -> msg)
+    (childMsg -> childModel -> ( childModel, Cmd childMsg ))
+    -> (childModel -> childId)
     -> (model -> List childModel)
     -> (model -> List childModel -> model)
-    -> (childModel -> childId)
-    -> (childMsg -> childModel -> ( childModel, Cmd childMsg ))
+    -> (childId -> childMsg -> msg)
     -> childId
     -> childMsg
     -> model
     -> ( model, Cmd msg )
-updateMany msgMap getter setter getId childUpdate childId childMsg model =
+updateMany childUpdate getId getter setter msgMap childId childMsg model =
     let
         ( newChildren, childCmd ) =
             (getter model)

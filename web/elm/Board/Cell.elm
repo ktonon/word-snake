@@ -2,6 +2,7 @@ module Board.Cell exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (class, style)
+import ChildUpdate
 
 
 -- MODEL
@@ -18,6 +19,19 @@ type alias Model =
 
 type alias Id =
     String
+
+
+
+-- UPDATE FOR PARENT
+
+
+type alias HasMany model =
+    { model | cells : List Model }
+
+
+updateMany : (Id -> Msg -> msg) -> Id -> Msg -> HasMany m -> ( HasMany m, Cmd msg )
+updateMany =
+    ChildUpdate.updateMany update .id .cells (\m x -> { m | cells = x })
 
 
 

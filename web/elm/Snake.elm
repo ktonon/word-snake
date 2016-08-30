@@ -6,7 +6,7 @@ import Html.Attributes exposing (..)
 import String
 import Board.Cell as Cell
 import Board.Layer as Layer
-import ChildUpdate exposing (updateMany)
+import ChildUpdate
 
 
 -- MODEL
@@ -35,6 +35,19 @@ bonus model =
 
 
 
+-- UPDATE FOR PARENT
+
+
+type alias HasOne model =
+    { model | snake : Model }
+
+
+updateOne : (Msg -> msg) -> Msg -> HasOne m -> ( HasOne m, Cmd msg )
+updateOne =
+    ChildUpdate.updateOne update .snake (\m x -> { m | snake = x })
+
+
+
 -- UPDATE
 
 
@@ -46,7 +59,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         LayerMessage index cMsg ->
-            updateMany LayerMessage .layers setLayers .index Layer.update index cMsg model
+            Layer.updateMany LayerMessage index cMsg model
 
 
 tryAddCells : Model -> String -> List Cell.Model -> Model

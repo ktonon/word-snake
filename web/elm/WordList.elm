@@ -2,6 +2,7 @@ module WordList exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import ChildUpdate
 
 
 -- MODEL
@@ -21,6 +22,19 @@ type alias Word =
 reset : Model
 reset =
     Model []
+
+
+
+-- UPDATE FOR PARENT
+
+
+type alias HasOne model =
+    { model | wordList : Model }
+
+
+updateOne : (Msg -> msg) -> Msg -> HasOne m -> ( HasOne m, Cmd msg )
+updateOne =
+    ChildUpdate.updateOne update .wordList (\m x -> { m | wordList = x })
 
 
 
