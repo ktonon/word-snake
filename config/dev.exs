@@ -38,7 +38,8 @@ config :phoenix, :stacktrace_depth, 20
 config :word_snake, WordSnake.Repo,
   adapter: Ecto.Adapters.Postgres,
   username: "postgres",
-  password: "12345",
+  password: "postgres",
   database: "word_snake_dev",
-  hostname: "192.168.99.100",
+  hostname: "localhost",
+  port: 5432,
   pool_size: 10

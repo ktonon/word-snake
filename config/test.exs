@@ -13,7 +13,8 @@ config :logger, level: :warn
 config :word_snake, WordSnake.Repo,
   adapter: Ecto.Adapters.Postgres,
   username: "postgres",
-  password: "12345",
+  password: "postgres",
   database: "word_snake_test",
-  hostname: "192.168.99.100",
+  hostname: "localhost",
+  port: 5432,
   pool: Ecto.Adapters.SQL.Sandbox
