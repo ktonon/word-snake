@@ -1,4 +1,9 @@
 defmodule WordSnake.RandomLetter do
+  @moduledoc """
+  Generates random letters in the range of A-Z with frequencies appropriate for
+  the english language.
+  """
+
   @freq [{"E", 0.1202},
         {"T", 0.0910},
         {"A", 0.0812},

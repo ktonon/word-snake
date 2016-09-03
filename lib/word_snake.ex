@@ -1,4 +1,8 @@
 defmodule WordSnake do
+  @moduledoc """
+  Online multiplayer word search game using Phoenix and Elm.
+  """
+
   use Application
 
   # See http://elixir-lang.org/docs/stable/elixir/Application.html

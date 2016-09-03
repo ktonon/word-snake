@@ -3,7 +3,8 @@ defmodule WordSnake.BoardController do
   import WordSnake.RandomLetter
 
   def show(conn, %{"id" => id}) do
-    String.to_integer(id)
+    id
+    |> String.to_integer
     |> :random.seed
 
     rows = 0..3
@@ -11,19 +12,17 @@ defmodule WordSnake.BoardController do
 
     cells =
     Enum.map(rows, fn y ->
-      Enum.map(cols, fn x ->
-        %{ "letter" => random_letter,
-           "id" => cell_id(x, y),
-           "x" => x,
-           "y" => y,
-           "adj" => neighbours(x, y, cols, rows)
-         }
+      Enum.map(cols, fn x -> %{
+        "letter" => random_letter,
+        "id" => cell_id(x, y),
+        "x" => x,
+        "y" => y,
+        "adj" => neighbours(x, y, cols, rows),
+      }
       end)
     end)
-    |> List.flatten
-
     render conn, board: %{
-      cells: cells
+      cells: List.flatten(cells)
     }
   end
 

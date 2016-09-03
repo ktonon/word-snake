@@ -32,6 +32,7 @@ defmodule WordSnake.Mixfile do
   defp deps do
     [
       {:cowboy, "~> 1.0"},
+      {:credo, "~> 0.4", only: [:dev, :test]},
       {:distillery, "~> 0.9"},
       {:gettext, "~> 0.11"},
       {:phoenix_ecto, "~> 3.0"},
