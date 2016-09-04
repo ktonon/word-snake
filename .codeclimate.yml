@@ -1,7 +1,0 @@
-engines:
-  credo:
-    enabled: true
-  eslint:
-    enabled: true
-    config:
-      config: .eslintrc

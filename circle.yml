@@ -21,4 +21,4 @@ dependencies:
 
 test:
   override:
-    - mix test
+    - mix test && mix credo && npm test
