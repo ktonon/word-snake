@@ -5,7 +5,7 @@
     "Update": "true"
   },
   "Ports": [{
-    "ContainerPort": "80"
+    "ContainerPort": "5000"
   }],
   "Volumes": [{
     "HostDirectory": "/home/ec2-user/cloudfront",

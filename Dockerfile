@@ -1,8 +1,8 @@
 FROM bitwalker/alpine-elixir-phoenix:latest
 
 # Set exposed ports
-EXPOSE 80
-ENV PORT=80 MIX_ENV=prod
+EXPOSE 5000
+ENV PORT=5000 MIX_ENV=prod
 ENV WORD_SNAKE_SECRET_KEY_BASE=changemesfkljsfoinofisnofidsndshiubkxzbukbewbzubeubxubexchangeme
 ENV WORD_SNAKE_DB_USERNAME=postgres
 ENV WORD_SNAKE_DB_PASSWORD=postgres
