@@ -4,6 +4,7 @@ FROM bitwalker/alpine-elixir-phoenix:latest
 EXPOSE 5000
 ENV PORT=5000 MIX_ENV=prod
 ENV WORD_SNAKE_SECRET_KEY_BASE=changemesfkljsfoinofisnofidsndshiubkxzbukbewbzubeubxubexchangeme
+ENV WORD_SNAKE_HOSTNAME=example.com
 ENV WORD_SNAKE_DB_USERNAME=postgres
 ENV WORD_SNAKE_DB_PASSWORD=postgres
 ENV WORD_SNAKE_DB_DATABASE=word_snake_prod
