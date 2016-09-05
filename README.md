@@ -4,3 +4,5 @@
 [![Deps Status](https://beta.hexfaktor.org/badge/all/github/ktonon/word-snake.svg)](https://beta.hexfaktor.org/github/ktonon/word-snake)
 
 Online multiplayer word search game using Phoenix and Elm.
+
+[Play it](http://wordsnake.betweenconcepts.com)
