@@ -1,0 +1,14 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Image": {
+    "Name": "<TAG>",
+    "Update": "true"
+  },
+  "Ports": [{
+    "ContainerPort": "80"
+  }],
+  "Volumes": [{
+    "HostDirectory": "/home/ec2-user/cloudfront",
+    "ContainerDirectory": "/etc/cloudfront"
+  }]
+}

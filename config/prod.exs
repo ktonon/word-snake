@@ -19,6 +19,19 @@ config :word_snake, WordSnake.Endpoint,
 # Do not print debug messages in production
 config :logger, level: :info
 
+config :word_snake, WordSnake.Endpoint,
+  secret_key_base: System.get_env("WORD_SNAKE_SECRET_KEY_BASE")
+
+# Configure your database
+config :word_snake, WordSnake.Repo,
+  adapter: Ecto.Adapters.Postgres,
+  username: System.get_env("WORD_SNAKE_DB_USERNAME"),
+  password: System.get_env("WORD_SNAKE_DB_PASSWORD"),
+  database: System.get_env("WORD_SNAKE_DB_DATABASE"),
+  hostname: System.get_env("WORD_SNAKE_DB_HOSTNAME"),
+  port: System.get_env("WORD_SNAKE_DB_PORT"),
+  pool_size: 20
+
 # ## SSL Support
 #
 # To get SSL working, you will need to add the `https` key
@@ -59,7 +72,3 @@ config :logger, level: :info
 # for the new static assets to be served after a hot upgrade:
 #
 #     config :word_snake, WordSnake.Endpoint, root: "."
-
-# Finally import the config/prod.secret.exs
-# which should be versioned separately.
-import_config "prod.secret.exs"
