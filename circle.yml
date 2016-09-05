@@ -23,14 +23,18 @@ test:
   override:
     - mix test && mix credo && npm test
 
-deployment:
-  staging:
-    branch: master
-    owner: ktonon
-    commands:
-      - sudo apt-get install python-dev zip
-      - sudo pip install --upgrade docker-compose==1.7.1
-      - npm install -g elm
-      - rel/build.sh:
-          timeout: 1800
-      - rel/deploy.sh
+# NOTE: Deploying on circleci takes too long because elm runs very slowly
+#       (often more than 10 minutes)
+#       Maybe because we are installing elm with npm, might be better to build
+#       from source in a base docker image
+# deployment:
+#   staging:
+#     branch: master
+#     owner: ktonon
+#     commands:
+#       - sudo apt-get install python-dev zip
+#       - sudo pip install --upgrade docker-compose==1.7.1
+#       - npm install -g elm
+#       - rel/build.sh:
+#           timeout: 1800
+#       - rel/deploy.sh
