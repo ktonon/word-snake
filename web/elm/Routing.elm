@@ -3,20 +3,20 @@ module Routing exposing (..)
 import Navigation
 import String
 import UrlParser exposing (..)
-import Board.Board as Board exposing (BoardSeed)
+import Room
 
 
 type Route
-    = RandomBoardRoute
-    | BoardRoute BoardSeed
+    = RandomRoomRoute
+    | RoomRoute Room.Id
     | NotFoundRoute
 
 
 matchers : Parser (Route -> a) a
 matchers =
     oneOf
-        [ format RandomBoardRoute (s "")
-        , format BoardRoute (s "board" </> int)
+        [ format RandomRoomRoute (s "")
+        , format RoomRoute (s "room" </> int)
         ]
 
 
