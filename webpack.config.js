@@ -3,12 +3,12 @@ const path = require('path');
 module.exports = {
   entry: {
     app: [
-      './web/static/index.js',
+      './app/index.js',
     ],
   },
 
   output: {
-    path: path.resolve(`${__dirname}/priv/static`),
+    path: path.resolve(`${__dirname}/public`),
     filename: '[name].js',
   },
 

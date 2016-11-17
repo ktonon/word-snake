@@ -1,5 +1,3 @@
-**/*{.,-}min.js
-**/elm-stuff/**
-**/phoenix*.js
-priv/static/**/*.js
-deps/**/*.js
+/node_modules/**
+/elm-stuff/**
+/public/**
