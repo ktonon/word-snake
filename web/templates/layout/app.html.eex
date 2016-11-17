@@ -11,13 +11,7 @@
   </head>
 
   <body>
-    <div class="container">
-
-      <main role="main">
-        <%= render @view_module, @view_template, assigns %>
-      </main>
-
-    </div> <!-- /container -->
-    <script src="<%= static_path(@conn, "/app.js") %>"></script>
+    <div id="main"></div>
+    <script src="./index.js"></script>
   </body>
 </html>
