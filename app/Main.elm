@@ -1,20 +1,18 @@
 module Main exposing (..)
 
 import Html exposing (Html, div, button, text)
-import Html.App
 import Navigation
 import Random
 import Routing exposing (Route(..))
 import Room
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
-    Navigation.program Routing.parser
+    Navigation.program UrlChange
         { init = init
         , update = update
         , view = view
-        , urlUpdate = urlUpdate
         , subscriptions = subscriptions
         }
 
@@ -34,11 +32,11 @@ empty =
         Room.reset
 
 
-init : Result String Route -> ( Model, Cmd Msg )
-init result =
+init : Navigation.Location -> ( Model, Cmd Msg )
+init location =
     let
         route =
-            Routing.routeFromResult result
+            Routing.routeFromLocation location
     in
         case route of
             RandomRoomRoute ->
@@ -49,18 +47,16 @@ init result =
                     ( empty, Random.generate GotoRoom gen )
 
             RoomRoute roomId ->
-                ( empty, Cmd.map RoomMessage (Room.fetchBoardInit 0) )
+                ( empty, Cmd.none )
 
             NotFoundRoute ->
                 ( empty, Cmd.none )
 
 
-urlUpdate : Result String Route -> Model -> ( Model, Cmd Msg )
-urlUpdate result model =
-    init result
 
-
-
+-- urlUpdate : Result String Route -> Model -> ( Model, Cmd Msg )
+-- urlUpdate result model =
+--     init result
 -- UPDATE
 
 
@@ -68,6 +64,7 @@ type Msg
     = RandomizeRoom
     | GotoRoom Room.Id
     | RoomMessage Room.Msg
+    | UrlChange Navigation.Location
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -81,6 +78,9 @@ update msg model =
 
         RoomMessage cMsg ->
             Room.updateOne RoomMessage cMsg model
+
+        UrlChange location ->
+            init location
 
 
 
@@ -99,4 +99,4 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-        [ Html.App.map RoomMessage (Room.view model.room) ]
+        [ Html.map RoomMessage (Room.view model.room) ]

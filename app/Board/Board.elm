@@ -1,7 +1,6 @@
 module Board.Board exposing (..)
 
 import Html exposing (..)
-import Html.App
 import Html.Attributes exposing (class, style)
 import Board.Cell as Cell
 import Board.Layer as Layer
@@ -64,4 +63,4 @@ update msg board =
 
 view : Model -> Html Msg
 view board =
-    div [] [ Html.App.map LayerMessage (Layer.view Layer.ShowLetters board.layer) ]
+    div [] [ Html.map LayerMessage (Layer.view Layer.ShowLetters board.layer) ]

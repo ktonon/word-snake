@@ -1,7 +1,6 @@
 module Board.Layer exposing (..)
 
 import Html exposing (..)
-import Html.App
 import Board.Cell as Cell
 import ChildUpdate
 
@@ -162,4 +161,4 @@ cellView dtype ( index, cell ) =
                     else
                         Cell.HighlightTail
     in
-        Html.App.map (CellMessage cell.id) (Cell.view cellType cell)
+        Html.map (CellMessage cell.id) (Cell.view cellType cell)

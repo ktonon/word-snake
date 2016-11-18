@@ -2,15 +2,12 @@ module Room exposing (..)
 
 import ChildUpdate
 import Html exposing (..)
-import Html.App
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 import Http
-import Json.Decode exposing ((:=))
 import Keyboard exposing (KeyCode)
 import Random
 import String
-import Task
 import Board.Board as Board exposing (BoardSeed)
 import Board.Cell as Cell
 import KeyAction exposing (..)
@@ -83,8 +80,9 @@ update msg model =
             ( model, Cmd.none )
 
         FetchBoardInit boardSeed ->
-            ( model, fetchBoardInit boardSeed )
+            ( model, Cmd.none )
 
+        -- ( model, fetchBoardInit boardSeed )
         FetchBoardInitOk init ->
             ( { model | board = Board.reset init }, Cmd.none )
 
@@ -111,24 +109,24 @@ update msg model =
             WordList.updateOne WordListMessage cMsg model
 
 
-fetchBoardInit : BoardSeed -> Cmd Msg
-fetchBoardInit boardSeed =
-    Http.get boardInit ("/api/boards/" ++ toString boardSeed)
-        |> Task.perform FetchBoardInitFailed FetchBoardInitOk
 
-
-boardInit : Json.Decode.Decoder (List Cell.Model)
-boardInit =
-    "cells"
-        := (Json.Decode.list
-                (Json.Decode.object5 Cell.Model
-                    ("id" := Json.Decode.string)
-                    ("letter" := Json.Decode.string)
-                    ("x" := Json.Decode.int)
-                    ("y" := Json.Decode.int)
-                    ("adj" := (Json.Decode.list Json.Decode.string))
-                )
-           )
+-- fetchBoardInit : BoardSeed -> Cmd Msg
+-- fetchBoardInit boardSeed =
+--     Http.get boardInit ("/api/boards/" ++ toString boardSeed)
+-- |> Task.perform FetchBoardInitFailed FetchBoardInitOk
+-- boardInit : Json.Decode.Decoder (List Cell.Model)
+-- boardInit =
+--     (Json.Decode.field "cells"
+--         (Json.Decode.list
+--             (Json.Decode.map5 Cell.Model
+--                 (Json.Decode.field "id" Json.Decode.string)
+--                 (Json.Decode.field "letter" Json.Decode.string)
+--                 (Json.Decode.field "x" Json.Decode.int)
+--                 (Json.Decode.field "y" Json.Decode.int)
+--                 (Json.Decode.field "adj" (Json.Decode.list Json.Decode.string))
+--             )
+--         )
+--     )
 
 
 keyActionUpdate : KeyAction -> Model -> ( Model, Cmd Msg )
@@ -190,7 +188,7 @@ view room =
         ]
         [ wordView room.snake
         , div [ class "clearfix" ]
-            [ div [ class "right" ] [ Html.App.map WordListMessage (WordList.view room.wordList) ]
+            [ div [ class "right" ] [ Html.map WordListMessage (WordList.view room.wordList) ]
             , div [ class "left" ] [ boardView room ]
             ]
         , button
@@ -210,8 +208,8 @@ boardView model =
             , ( "position", "relative" )
             ]
         ]
-        [ Html.App.map BoardMessage (Board.view model.board)
-        , Html.App.map SnakeMessage (Snake.view model.snake)
+        [ Html.map BoardMessage (Board.view model.board)
+        , Html.map SnakeMessage (Snake.view model.snake)
         ]
 
 

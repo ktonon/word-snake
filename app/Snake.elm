@@ -1,7 +1,6 @@
 module Snake exposing (..)
 
 import Html exposing (..)
-import Html.App
 import Html.Attributes exposing (..)
 import String
 import Board.Cell as Cell
@@ -109,4 +108,4 @@ view model =
 
 viewLayer : Layer.Model -> Html Msg
 viewLayer layer =
-    div [] [ Html.App.map (LayerMessage layer.index) (Layer.view Layer.ShowPath layer) ]
+    div [] [ Html.map (LayerMessage layer.index) (Layer.view Layer.ShowPath layer) ]
