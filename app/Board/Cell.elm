@@ -13,12 +13,57 @@ type alias Model =
     , letter : String
     , x : Int
     , y : Int
-    , adj : List String
+    , adj : List Id
     }
 
 
 type alias Id =
     String
+
+
+type alias Bounds =
+    ( Int, Int )
+
+
+type alias Pos =
+    ( Int, Int )
+
+
+makeId : Pos -> Id
+makeId ( x, y ) =
+    (toString x) ++ "_" ++ (toString y)
+
+
+init : Bounds -> Int -> Int -> Char -> Model
+init bounds x y letter =
+    let
+        pos =
+            ( x, y )
+    in
+        findNeighbours bounds pos
+            |> Model (makeId pos) (String.fromChar letter) x y
+
+
+findNeighbours : Bounds -> Pos -> List Id
+findNeighbours bounds ( x, y ) =
+    [ ( x - 1, y - 1 )
+    , ( x - 1, y )
+    , ( x - 1, y + 1 )
+    , ( x, y - 1 )
+    , ( x, y + 1 )
+    , ( x + 1, y - 1 )
+    , ( x + 1, y )
+    , ( x + 1, y + 1 )
+    ]
+        |> List.filterMap (inBoundId bounds)
+
+
+inBoundId : Bounds -> Pos -> Maybe Id
+inBoundId ( min, max ) ( x, y ) =
+    if x < min || x > max || y < min || y > max then
+        Nothing
+    else
+        makeId ( x, y ) |> Just
 
 
 

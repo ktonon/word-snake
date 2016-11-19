@@ -26,47 +26,15 @@ reset grid =
 initCells : List (List Char) -> List Cell.Model
 initCells grid =
     let
-        adj =
-            findNeighbours (inBounds ( 0, List.length grid - 1 ))
+        bounds =
+            ( 0, List.length grid - 1 )
     in
         grid
             |> List.indexedMap
-                (\y letters ->
-                    letters |> List.indexedMap (initCell adj y)
+                (\x letters ->
+                    letters |> List.indexedMap (Cell.init bounds x)
                 )
             |> List.concat
-
-
-initCell : (( Int, Int ) -> List String) -> Int -> Int -> Char -> Cell.Model
-initCell adj y x letter =
-    let
-        id =
-            (toString x) ++ "_" ++ (toString y)
-    in
-        adj ( x, y )
-            |> Cell.Model id (String.fromChar letter) x y
-
-
-findNeighbours : (( Int, Int ) -> Maybe String) -> ( Int, Int ) -> List String
-findNeighbours neighbour ( x, y ) =
-    [ ( x - 1, y - 1 )
-    , ( x - 1, y )
-    , ( x - 1, y + 1 )
-    , ( x, y - 1 )
-    , ( x, y + 1 )
-    , ( x + 1, y - 1 )
-    , ( x + 1, y )
-    , ( x + 1, y + 1 )
-    ]
-        |> List.filterMap neighbour
-
-
-inBounds : ( Int, Int ) -> ( Int, Int ) -> Maybe String
-inBounds ( min, max ) ( x, y ) =
-    if x < min || x > max || y < min || y > max then
-        Nothing
-    else
-        (toString x) ++ "_" ++ (toString y) |> Just
 
 
 findCells : Model -> String -> List Cell.Model
