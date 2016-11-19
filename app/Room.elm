@@ -6,11 +6,12 @@ import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
 import Http
 import Keyboard exposing (KeyCode)
-import Random
+import Random.Pcg as Random
 import String
 import Board.Board as Board exposing (BoardSeed)
 import Board.Cell as Cell
 import KeyAction exposing (..)
+import Rand exposing (Lang(..), Size(..))
 import Snake
 import WordList
 
@@ -27,6 +28,7 @@ type alias Model =
     , id : Id
     , snake : Snake.Model
     , wordList : WordList.Model
+    , tempLetters : List (List Char)
     }
 
 
@@ -42,6 +44,7 @@ reset =
         -1
         Snake.reset
         WordList.reset
+        []
 
 
 
@@ -63,6 +66,8 @@ updateOne =
 
 type Msg
     = NoOp
+    | Shuffle
+    | NewBoardLetters (List (List Char))
     | FetchBoardInit BoardSeed
     | FetchBoardInitOk (List Cell.Model)
     | FetchBoardInitFailed Http.Error
@@ -78,6 +83,15 @@ update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
+
+        Shuffle ->
+            ( model
+            , Random.generate NewBoardLetters
+                (Rand.board English Board5x5)
+            )
+
+        NewBoardLetters matrix ->
+            ( { model | tempLetters = matrix }, Cmd.none )
 
         FetchBoardInit boardSeed ->
             ( model, Cmd.none )
@@ -193,7 +207,7 @@ view room =
             ]
         , button
             [ class "btn bg-gray rounded"
-            , onClick RandomizeBoard
+            , onClick Shuffle
             ]
             [ text "Shuffle" ]
         ]
@@ -210,7 +224,22 @@ boardView model =
         ]
         [ Html.map BoardMessage (Board.view model.board)
         , Html.map SnakeMessage (Snake.view model.snake)
+        , tempLettersView model.tempLetters
         ]
+
+
+tempLettersView : List (List Char) -> Html Msg
+tempLettersView cols =
+    div [] (List.map colView cols)
+
+
+colView : List Char -> Html Msg
+colView col =
+    div []
+        (List.map
+            (\char -> char |> String.fromChar |> text)
+            col
+        )
 
 
 wordView : Snake.Model -> Html Msg
