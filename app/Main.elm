@@ -1,10 +1,21 @@
 module Main exposing (..)
 
+import Board.Board as Board exposing (BoardSeed)
+import Dom
+import Html exposing (..)
 import Html exposing (Html, div, button, text)
+import Html.Attributes exposing (class, style, id)
+import Html.Events exposing (onClick)
+import KeyAction exposing (..)
+import Keyboard exposing (KeyCode)
 import Navigation
-import Random
+import Rand exposing (Lang(..), Size(..))
+import Random.Pcg as Random
 import Routing exposing (Route(..))
-import Room
+import Snake
+import String
+import Task
+import WordList
 
 
 main : Program Never Model Msg
@@ -22,14 +33,40 @@ main =
 
 
 type alias Model =
-    { room : Room.Model
+    { seed : Random.Seed
+    , board : Board.Model
+    , snake : Snake.Model
+    , wordList : WordList.Model
     }
 
 
-empty : Model
-empty =
+setSnake : Model -> Snake.Model -> Model
+setSnake model =
+    \x -> { model | snake = x }
+
+
+reset : Model
+reset =
     Model
-        Room.reset
+        (Random.initialSeed 0)
+        (Board.reset [])
+        Snake.reset
+        WordList.reset
+
+
+
+-- UPDATE
+
+
+type Msg
+    = BoardMessage Board.Msg
+    | FocusResult (Result Dom.Error ())
+    | GotoBoard Board.BoardSeed
+    | KeyDown KeyCode
+    | Shuffle
+    | SnakeMessage Snake.Msg
+    | UrlChange Navigation.Location
+    | WordListMessage WordList.Msg
 
 
 init : Navigation.Location -> ( Model, Cmd Msg )
@@ -39,48 +76,90 @@ init location =
             Routing.routeFromLocation location
     in
         case route of
-            RandomRoomRoute ->
+            RandomBoardRoute ->
                 let
                     gen =
                         Random.int 0 1000000000000
                 in
-                    ( empty, Random.generate GotoRoom gen )
+                    ( reset, Random.generate GotoBoard gen )
 
-            RoomRoute roomId ->
-                ( empty, Cmd.none )
+            BoardRoute val ->
+                let
+                    seed =
+                        Random.initialSeed val
 
-            NotFoundRoute ->
-                ( empty, Cmd.none )
-
-
-
--- urlUpdate : Result String Route -> Model -> ( Model, Cmd Msg )
--- urlUpdate result model =
---     init result
--- UPDATE
-
-
-type Msg
-    = RandomizeRoom
-    | GotoRoom Room.Id
-    | RoomMessage Room.Msg
-    | UrlChange Navigation.Location
+                    ( matrix, newSeed ) =
+                        Random.step (Rand.board English Board4x4) seed
+                in
+                    ( { reset | board = Board.reset matrix }
+                    , Task.attempt FocusResult (Dom.blur "shuffle")
+                    )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        RandomizeRoom ->
+        BoardMessage cMsg ->
+            Board.updateOne BoardMessage cMsg model
+
+        FocusResult error ->
+            ( model, Cmd.none )
+
+        GotoBoard boardSeed ->
+            ( model, Navigation.newUrl ("#board/" ++ toString boardSeed) )
+
+        KeyDown keyCode ->
+            keyActionUpdate (actionFromCode keyCode) model
+
+        Shuffle ->
             ( model, Navigation.newUrl "#" )
 
-        GotoRoom roomId ->
-            ( model, Navigation.newUrl ("#room/" ++ toString roomId) )
-
-        RoomMessage cMsg ->
-            Room.updateOne RoomMessage cMsg model
+        SnakeMessage cMsg ->
+            Snake.updateOne SnakeMessage cMsg model
 
         UrlChange location ->
             init location
+
+        WordListMessage cMsg ->
+            WordList.updateOne WordListMessage cMsg model
+
+
+keyActionUpdate : KeyAction -> Model -> ( Model, Cmd Msg )
+keyActionUpdate keyAction model =
+    case keyAction of
+        Letter letter ->
+            ( setSnake model
+                (letter
+                    |> Board.findCells model.board
+                    |> Snake.tryAddCells model.snake letter
+                )
+            , Cmd.none
+            )
+
+        Cancel ->
+            ( setSnake model Snake.reset, Cmd.none )
+
+        Commit ->
+            let
+                word =
+                    model.snake.word
+
+                newWordList =
+                    if WordList.canAddWord model.wordList word then
+                        WordList.Word word (Snake.bonus model.snake)
+                            |> WordList.addWord model.wordList
+                    else
+                        model.wordList
+            in
+                ( { model
+                    | wordList = newWordList
+                    , snake = Snake.reset
+                  }
+                , Cmd.none
+                )
+
+        Undo ->
+            ( setSnake model (Snake.undo model.snake), Cmd.none )
 
 
 
@@ -89,7 +168,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.map RoomMessage (Room.subscriptions model.room)
+    Keyboard.downs KeyDown
 
 
 
@@ -98,5 +177,77 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ Html.map RoomMessage (Room.view model.room) ]
+    div
+        [ class "center"
+        , style [ ( "padding", "50px" ) ]
+        ]
+        [ wordView model.snake
+        , div [ class "clearfix" ]
+            [ div [ class "right" ] [ Html.map WordListMessage (WordList.view model.wordList) ]
+            , div [ class "left" ] [ boardView model ]
+            ]
+        , button
+            [ class "btn bg-gray rounded"
+            , id "shuffle"
+            , onClick Shuffle
+            ]
+            [ text "Shuffle" ]
+        ]
+
+
+boardView : Model -> Html Msg
+boardView model =
+    div
+        [ style
+            [ ( "width", "600px" )
+            , ( "height", "600px" )
+            , ( "position", "relative" )
+            ]
+        ]
+        [ Html.map BoardMessage (Board.view model.board)
+        , Html.map SnakeMessage (Snake.view model.snake)
+        ]
+
+
+wordView : Snake.Model -> Html Msg
+wordView snake =
+    let
+        showWord =
+            if String.isEmpty snake.word then
+                "Start typing..."
+            else
+                snake.word
+
+        color =
+            if String.isEmpty snake.word then
+                "#f8f8f8"
+            else
+                "#369"
+    in
+        div []
+            [ div
+                [ class "center clearfix"
+                , style
+                    [ ( "font-size", "70px" )
+                    , ( "border", "dashed 1px #999" )
+                    , ( "border-radius", "20px" )
+                    , ( "color", color )
+                    ]
+                ]
+                [ text showWord
+                , div [ class "right", style [ ( "padding-right", "20px" ) ] ]
+                    (bonusView snake)
+                ]
+            ]
+
+
+bonusView : Snake.Model -> List (Html Msg)
+bonusView snake =
+    let
+        bonus =
+            Snake.bonus snake
+    in
+        if bonus > 1 then
+            [ text ("x" ++ (toString bonus)) ]
+        else
+            []

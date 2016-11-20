@@ -2,20 +2,18 @@ module Routing exposing (..)
 
 import Navigation
 import UrlParser exposing (..)
-import Room
+import Board.Board exposing (BoardSeed)
 
 
 type Route
-    = RandomRoomRoute
-    | RoomRoute Room.Id
-    | NotFoundRoute
+    = RandomBoardRoute
+    | BoardRoute BoardSeed
 
 
 route : Parser (Route -> a) a
 route =
     oneOf
-        [ map RandomRoomRoute (s "")
-        , map RoomRoute (s "room" </> int)
+        [ map BoardRoute (s "board" </> int)
         ]
 
 
@@ -30,4 +28,4 @@ routeFromLocation location =
                 route
 
             Nothing ->
-                NotFoundRoute
+                RandomBoardRoute
