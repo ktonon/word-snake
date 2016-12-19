@@ -1,4 +1,5 @@
+/.s3-website.json
+/app/config.json
 /elm-stuff/
 /node_modules/
 /public/
-.s3-website.json

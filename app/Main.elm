@@ -1,11 +1,14 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Board.Board as Board exposing (BoardSeed)
+import Config
 import Dom
 import Html exposing (..)
 import Html exposing (Html, div, button, text)
 import Html.Attributes exposing (class, style, id)
 import Html.Events exposing (onClick)
+import Json.Decode exposing (decodeValue)
+import Json.Encode
 import KeyAction exposing (..)
 import Keyboard exposing (KeyCode)
 import Navigation
@@ -51,7 +54,7 @@ reset =
         (Random.initialSeed 0)
         (Board.reset [])
         Snake.reset
-        WordList.reset
+        (WordList.reset "")
 
 
 
@@ -59,7 +62,8 @@ reset =
 
 
 type Msg
-    = BoardMessage Board.Msg
+    = LoadConfig Json.Encode.Value
+    | BoardMessage Board.Msg
     | FocusResult (Result Dom.Error ())
     | GotoBoard Board.BoardSeed
     | KeyDown KeyCode
@@ -89,7 +93,7 @@ init location =
                         Random.initialSeed val
 
                     ( matrix, newSeed ) =
-                        Random.step (Rand.board English Board4x4) seed
+                        Random.step (Rand.board English Board5x5) seed
                 in
                     ( { reset | board = Board.reset matrix }
                     , Task.attempt FocusResult (Dom.blur "shuffle")
@@ -99,6 +103,18 @@ init location =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        LoadConfig data ->
+            let
+                result =
+                    decodeValue Config.decoder data
+            in
+                case result of
+                    Ok config ->
+                        ( { model | wordList = WordList.reset config.apiEndpoint }, Cmd.none )
+
+                    Err err ->
+                        ( model, Cmd.none )
+
         BoardMessage cMsg ->
             Board.updateOne BoardMessage cMsg model
 
@@ -144,18 +160,18 @@ keyActionUpdate keyAction model =
                 word =
                     model.snake.word
 
-                newWordList =
+                ( newWordList, cmd ) =
                     if WordList.canAddWord model.wordList word then
-                        WordList.Word word (Snake.bonus model.snake)
+                        WordList.Word word (Snake.bonus model.snake) Nothing
                             |> WordList.addWord model.wordList
                     else
-                        model.wordList
+                        ( model.wordList, Cmd.none )
             in
                 ( { model
                     | wordList = newWordList
                     , snake = Snake.reset
                   }
-                , Cmd.none
+                , Cmd.map WordListMessage cmd
                 )
 
         Undo ->
@@ -166,9 +182,15 @@ keyActionUpdate keyAction model =
 -- SUBSCRIPTIONS
 
 
+port config : (Json.Encode.Value -> msg) -> Sub msg
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Keyboard.downs KeyDown
+    Sub.batch
+        [ Keyboard.downs KeyDown
+        , config LoadConfig
+        ]
 
 
 
@@ -199,8 +221,8 @@ boardView : Model -> Html Msg
 boardView model =
     div
         [ style
-            [ ( "width", "600px" )
-            , ( "height", "600px" )
+            [ ( "width", "750px" )
+            , ( "height", "750px" )
             , ( "position", "relative" )
             ]
         ]
