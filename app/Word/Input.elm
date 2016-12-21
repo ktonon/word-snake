@@ -9,8 +9,8 @@ import Word.Score as Score exposing (Score)
 -- VIEW
 
 
-view : String -> Score -> Candidate.Status -> Html msg
-view word score status =
+view : String -> Score -> Candidate.Status -> Html msg -> Html msg
+view word score status timer =
     let
         showWord =
             if String.isEmpty word then
@@ -21,8 +21,9 @@ view word score status =
         div
             [ statusClass status "word-input clearfix" ]
             [ div [ class "box rounded center col col-8" ] [ text showWord ]
-            , div [ class "bonus pl2 col col-4", style [ ( "padding-right", "20px" ) ] ]
+            , div [ class "bonus pl2 col col-3" ]
                 (bonusView status score)
+            , div [ class "timer col col-1" ] [ timer ]
             ]
 
 
@@ -39,4 +40,4 @@ bonusView status score =
             [ text (score |> Score.toStringIfValid) ]
 
         _ ->
-            []
+            [ div [ class "white" ] [ text "." ] ]

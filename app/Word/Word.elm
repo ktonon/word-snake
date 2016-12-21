@@ -17,13 +17,13 @@ type alias Word =
     { word : String
     , score : Score
     , engConfig : Eng.Config
-    , definition : Maybe Definition
+    , definition : Definition
     }
 
 
 new : Eng.Config -> String -> Bonus -> ( Word, Cmd Msg )
 new engConfig word bonus =
-    ( Word word (newScore word bonus) engConfig Nothing
+    ( Word word (newScore word bonus) engConfig Definition.empty
     , Task.attempt WordCheckResult
         (Eng.checkIsWord engConfig (word |> String.toLower))
     )
@@ -38,6 +38,7 @@ type Msg
     | DefinitionMsg Definition.Msg
     | WordCheckResult (Result Eng.Error WordCheck)
     | WordDefinitionResult (Result Eng.Error WordDefinition)
+    | HideDefinitionsOtherThan Word
 
 
 update : Msg -> Word -> ( Word, Cmd Msg )
@@ -46,15 +47,23 @@ update msg word =
         ToggleDefinition ->
             case word.score.validity of
                 Valid ->
-                    case word.definition of
-                        Just _ ->
-                            ( { word | definition = Nothing }, Cmd.none )
-
-                        Nothing ->
-                            ( word
-                            , Eng.fetchDefinitions word.engConfig (word.word |> String.toLower)
-                                |> Task.attempt WordDefinitionResult
+                    case word.definition.state of
+                        Empty ->
+                            ( showDefinition word
+                            , [ Eng.fetchDefinitions word.engConfig (word.word |> String.toLower)
+                                    |> Task.attempt WordDefinitionResult
+                              , Task.perform HideDefinitionsOtherThan (Task.succeed word)
+                              ]
+                                |> Cmd.batch
                             )
+
+                        Hidden ->
+                            ( showDefinition word
+                            , Task.perform HideDefinitionsOtherThan (Task.succeed word)
+                            )
+
+                        Visible ->
+                            ( hideDefinition word, Cmd.none )
 
                 _ ->
                     ( word, Cmd.none )
@@ -62,7 +71,7 @@ update msg word =
         DefinitionMsg defMsg ->
             case defMsg of
                 Dismiss ->
-                    ( { word | definition = Nothing }, Cmd.none )
+                    ( hideDefinition word, Cmd.none )
 
         WordCheckResult result ->
             case result of
@@ -77,10 +86,23 @@ update msg word =
         WordDefinitionResult result ->
             case result of
                 Ok def ->
-                    ( { word | definition = Just (Definition def) }, Cmd.none )
+                    ( { word | definition = Definition.load word.definition def }, Cmd.none )
 
-                Err _ ->
+                _ ->
                     ( word, Cmd.none )
+
+        _ ->
+            ( word, Cmd.none )
+
+
+hideDefinition : Word -> Word
+hideDefinition word =
+    { word | definition = Definition.hide word.definition }
+
+
+showDefinition : Word -> Word
+showDefinition word =
+    { word | definition = Definition.show word.definition }
 
 
 order : Word -> Word -> Order
@@ -112,13 +134,13 @@ view word =
         ]
 
 
-definitionView : Maybe Definition -> Html Msg
-definitionView maybeDef =
-    case maybeDef of
-        Just def ->
+definitionView : Definition -> Html Msg
+definitionView def =
+    case def.state of
+        Visible ->
             Html.map DefinitionMsg (Definition.view def)
 
-        Nothing ->
+        _ ->
             span [] []
 
 

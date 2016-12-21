@@ -48,15 +48,32 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         WordMsg word wordMsg ->
-            ChildUpdate.updateMany
-                Word.update
-                .word
-                .words
-                (\m x -> { m | words = List.sortWith Word.order x })
-                WordMsg
-                word
-                wordMsg
-                model
+            case wordMsg of
+                HideDefinitionsOtherThan exceptWord ->
+                    ( { model
+                        | words =
+                            model.words
+                                |> List.map
+                                    (\other ->
+                                        if other.word == exceptWord.word then
+                                            other
+                                        else
+                                            Word.hideDefinition other
+                                    )
+                      }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ChildUpdate.updateMany
+                        Word.update
+                        .word
+                        .words
+                        (\m x -> { m | words = List.sortWith Word.order x })
+                        WordMsg
+                        word
+                        wordMsg
+                        model
 
 
 candidateStatus : Model -> String -> Candidate.Status

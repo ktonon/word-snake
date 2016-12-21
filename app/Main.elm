@@ -7,8 +7,7 @@ import Config.Config as Config
 import Dom
 import Html exposing (..)
 import Html exposing (Html, div, button, text)
-import Html.Attributes exposing (class, style, id)
-import Html.Events exposing (onClick)
+import Html.Attributes exposing (alt, class, href, id, src, style)
 import Json.Decode exposing (decodeValue)
 import Json.Encode
 import KeyAction exposing (..)
@@ -17,7 +16,11 @@ import Navigation
 import Random.Pcg as Random
 import Routing.Routing as Routing exposing (Route(..))
 import Routing.Shape as Shape exposing (Shape(..))
+import Shuffle exposing (SizeChange)
 import Task
+import Time exposing (Time)
+import Timer exposing (..)
+import Util
 import Word.Candidate exposing (Status(..))
 import Word.Input
 import Word.List
@@ -40,18 +43,21 @@ main =
 
 type alias Model =
     { config : Config.Model
-    , shape : Shape
-    , seed : Random.Seed
+    , configError : String
     , board : Board.Model
+    , mode : Mode
+    , seed : Random.Seed
+    , shape : Shape
     , snake : Snake.Model
+    , timer : Timer
     , wordList : Word.List.Model
     }
 
 
-type SizeChange
-    = Smaller
-    | Same
-    | Bigger
+type Mode
+    = Playing
+    | Reviewing
+    | Loading
 
 
 setSnake : Model -> Snake.Model -> Model
@@ -63,10 +69,13 @@ reset : Config.Model -> Model
 reset config =
     Model
         config
-        Shape.default
-        (Random.initialSeed 0)
+        ""
         (Board.reset [])
+        Loading
+        (Random.initialSeed 0)
+        Shape.default
         Snake.reset
+        (Timer.reset Shape.default)
         (Word.List.reset "")
 
 
@@ -75,13 +84,14 @@ reset config =
 
 
 type Msg
-    = LoadConfig Json.Encode.Value
-    | BoardMessage Board.Msg
+    = BoardMessage Board.Msg
     | FocusResult (Result Dom.Error ())
     | GotoBoard Shape GeneratorVersion Seed
     | KeyDown KeyCode
+    | LoadConfig Json.Encode.Value
     | Shuffle SizeChange
     | SnakeMessage Snake.Msg
+    | Tick Time
     | UrlChange Navigation.Location
     | WordListMessage Word.List.Msg
 
@@ -97,7 +107,20 @@ init config location =
     in
         case route of
             NotFoundRoute ->
-                ( model, Cmd.none )
+                ( { model
+                    | shape = Board4x4
+                    , mode = Playing
+                    , timer = Timer.reset Board4x4
+                    , board =
+                        Board.reset
+                            [ [ '4', 'N', 'F', 'O' ]
+                            , [ '0', 'O', 'P', 'U' ]
+                            , [ '4', 'T', 'A', 'N' ]
+                            , [ 'E', 'G', 'B', 'D' ]
+                            ]
+                  }
+                , Cmd.none
+                )
 
             RandomPlayRoute shape ->
                 let
@@ -108,14 +131,14 @@ init config location =
 
             PlayRoute shape version seedValue ->
                 let
-                    seed =
-                        Random.initialSeed seedValue
-
                     ( matrix, newSeed ) =
-                        Random.step (Rand.board config.language shape) seed
+                        Random.initialSeed seedValue
+                            |> Random.step (Rand.board config.language shape)
                 in
                     ( { model
                         | shape = shape
+                        , mode = Playing
+                        , timer = Timer.reset shape
                         , board = Board.reset matrix
                       }
                     , [ Task.attempt FocusResult (Dom.blur "shuffle")
@@ -129,18 +152,6 @@ init config location =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        LoadConfig data ->
-            let
-                result =
-                    decodeValue Config.decoder data
-            in
-                case result of
-                    Ok config ->
-                        ( { model | wordList = Word.List.reset config.apiEndpoint }, Cmd.none )
-
-                    Err err ->
-                        ( model, Cmd.none )
-
         BoardMessage cMsg ->
             Board.updateOne BoardMessage cMsg model
 
@@ -153,21 +164,58 @@ update msg model =
         KeyDown keyCode ->
             keyActionUpdate (actionFromCode keyCode) model
 
-        Shuffle sizeChange ->
+        LoadConfig data ->
             let
-                s =
-                    newShape model.shape sizeChange
+                result =
+                    decodeValue Config.decoder data
             in
-                ( model, Routing.randomPlayUrl s )
+                case result of
+                    Ok config ->
+                        ( { model
+                            | config = config
+                            , wordList = Word.List.reset config.apiEndpoint
+                          }
+                        , Cmd.none
+                        )
+
+                    Err err ->
+                        ( { model | configError = err }, Cmd.none )
+
+        Shuffle change ->
+            ( model
+            , change
+                |> Shuffle.changeShape model.shape
+                |> Routing.randomPlayUrl
+            )
 
         SnakeMessage cMsg ->
             Snake.updateOne SnakeMessage cMsg model
+
+        Tick time ->
+            ( tick model time, Cmd.none )
 
         UrlChange location ->
             init model.config location
 
         WordListMessage cMsg ->
             Word.List.updateOne WordListMessage cMsg model
+
+
+tick : Model -> Time -> Model
+tick model time =
+    case model.mode of
+        Playing ->
+            let
+                newTimer =
+                    Timer.tick model.timer time
+            in
+                if Timer.isExpired newTimer then
+                    { model | timer = Timer.zero, mode = Reviewing }
+                else
+                    { model | timer = newTimer }
+
+        _ ->
+            model
 
 
 keyActionUpdate : KeyAction -> Model -> ( Model, Cmd Msg )
@@ -218,10 +266,16 @@ port config : (Json.Encode.Value -> msg) -> Sub msg
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch
-        [ Keyboard.downs KeyDown
-        , config LoadConfig
-        ]
+    case model.mode of
+        Playing ->
+            Sub.batch
+                [ Keyboard.downs KeyDown
+                , Time.every Time.second Tick
+                , config LoadConfig
+                ]
+
+        _ ->
+            config LoadConfig
 
 
 
@@ -230,51 +284,32 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
+    case model.mode of
+        Loading ->
+            h1 [ class "m4" ] [ text "Loading..." ]
+
+        Playing ->
+            playingView model
+
+        Reviewing ->
+            playingView model
+
+
+playingView : Model -> Html Msg
+playingView model =
     div
         [ class "px2" ]
-        [ shuffleButtons model.shape
+        [ Shuffle.buttons Shuffle model.shape
         , Word.Input.view model.snake.word
             (Snake.bonus model.snake |> Score.newScore model.snake.word)
             (Word.List.candidateStatus model.wordList model.snake.word)
+            (Timer.view model.timer)
         , div [ class "clearfix" ]
             [ div [ class "col col-9" ] [ boardView model ]
-            , div [] [ Html.map WordListMessage (Word.List.view model.wordList) ]
+            , Html.map WordListMessage (Word.List.view model.wordList)
             ]
+        , Util.forkMe model.config
         ]
-
-
-shuffleButtons : Shape -> Html Msg
-shuffleButtons shape =
-    let
-        ( showSmaller, showBigger ) =
-            case shape of
-                Board3x3 ->
-                    ( False, True )
-
-                Board5x5 ->
-                    ( True, False )
-
-                _ ->
-                    ( True, True )
-    in
-        div [ class "center py2" ]
-            [ shuffleButton "shuffle-smaller" "" "fa fa-th-large" Smaller showSmaller
-            , shuffleButton "shuffle" "Shuffle" "" Same True
-            , shuffleButton "shuffle-bigger" "" "fa fa-th" Bigger showBigger
-            ]
-
-
-shuffleButton : String -> String -> String -> SizeChange -> Bool -> Html Msg
-shuffleButton id_ label icon sizeChange show =
-    if show then
-        a
-            [ class ("shuffle m1 " ++ icon)
-            , id id_
-            , onClick (Shuffle sizeChange)
-            ]
-            [ text label ]
-    else
-        span [ class ("shuffle disabled m1 " ++ icon) ] [ text label ]
 
 
 boardView : Model -> Html Msg
@@ -289,33 +324,11 @@ boardView model =
 boardStyle : Shape -> Html.Attribute msg
 boardStyle shape =
     let
-        n =
-            Shape.toInt shape
-
         cssLength =
-            (n * 150 |> toString) ++ "px"
+            (shape |> Shape.toInt |> \n -> n * 150 |> toString) ++ "px"
     in
         style
             [ ( "width", cssLength )
             , ( "height", cssLength )
             , ( "position", "relative" )
             ]
-
-
-newShape : Shape -> SizeChange -> Shape
-newShape shape sizeChange =
-    case ( shape, sizeChange ) of
-        ( Board3x3, Bigger ) ->
-            Board4x4
-
-        ( Board4x4, Smaller ) ->
-            Board3x3
-
-        ( Board4x4, Bigger ) ->
-            Board5x5
-
-        ( Board5x5, Smaller ) ->
-            Board4x4
-
-        ( board, _ ) ->
-            board

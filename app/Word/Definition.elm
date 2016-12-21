@@ -11,7 +11,40 @@ import PartOfSpeech
 
 
 type alias Definition =
-    { def : WordDefinition
+    { def : Maybe WordDefinition
+    , state : State
+    }
+
+
+type State
+    = Empty
+    | Hidden
+    | Visible
+
+
+empty : Definition
+empty =
+    Definition Nothing Empty
+
+
+load : Definition -> WordDefinition -> Definition
+load def wordDef =
+    { def | def = Just wordDef }
+
+
+show : Definition -> Definition
+show def =
+    { def | state = Visible }
+
+
+hide : Definition -> Definition
+hide def =
+    { def
+        | state =
+            if def.state == Visible then
+                Hidden
+            else
+                def.state
     }
 
 
@@ -30,9 +63,15 @@ type Msg
 view : Definition -> Html Msg
 view def =
     ul [ class "definition-list", onClick Dismiss ]
-        (def.def.definitions
-            |> List.take 2
-            |> List.map viewDef
+        (case def.def of
+            Just wordDef ->
+                (wordDef.definitions
+                    |> List.take 2
+                    |> List.map viewDef
+                )
+
+            Nothing ->
+                [ text "Loading definition..." ]
         )
 
 

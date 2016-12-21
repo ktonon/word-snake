@@ -28,6 +28,11 @@ body {
   .bonus {
     font-size: 40px;
   }
+  .timer {
+    color: black;
+    font-size: 40px;
+    text-align: right;
+  }
 }
 
 .word-candidate {
@@ -68,5 +73,14 @@ body {
   li {
     list-style-type: none;
     .part-of-speech { font-weight: bold; }
+  }
+}
+
+.fork-me {
+  img {
+    position: absolute;
+    top: 0;
+    right: 0;
+    border: 0;
   }
 }
