@@ -2,6 +2,7 @@ module Word.Score exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (class)
+import Word.Validity as Validity exposing (Validity(..))
 
 
 -- MODEL
@@ -18,6 +19,7 @@ type alias Bonus =
 type alias Score =
     { base : Base
     , bonus : Bonus
+    , validity : Validity
     }
 
 
@@ -42,16 +44,31 @@ newScore word bonus =
                 11
             )
             bonus
+            Unknown
 
 
-invalid : Score
-invalid =
-    Score 1 -1
+validate : Bool -> Score -> Score
+validate isValid score =
+    { score
+        | validity =
+            if isValid then
+                Valid
+            else
+                Invalid
+    }
 
 
 toInt : Score -> Int
 toInt score =
-    score.base * score.bonus
+    case score.validity of
+        Valid ->
+            score.base * score.bonus
+
+        Invalid ->
+            -1
+
+        Unknown ->
+            0
 
 
 
@@ -60,19 +77,37 @@ toInt score =
 
 view : Score -> Html msg
 view score =
-    div [ class "score col col-1" ]
-        [ text (score |> toString)
-        ]
+    let
+        icon =
+            case score.validity of
+                Unknown ->
+                    " pt1 fa fa-spinner"
+
+                _ ->
+                    ""
+    in
+        div [ class ("score col col-1" ++ icon) ]
+            [ text (score |> toString) ]
 
 
 toString : Score -> String
 toString score =
-    if (score.bonus == -1) then
-        "-1"
-    else
-        (score.base |> Basics.toString)
-            ++ (if score.bonus > 1 then
-                    " x " ++ (score.bonus |> Basics.toString)
-                else
-                    ""
-               )
+    case score.validity of
+        Valid ->
+            score |> toStringIfValid
+
+        Invalid ->
+            "-1"
+
+        Unknown ->
+            ""
+
+
+toStringIfValid : Score -> String
+toStringIfValid score =
+    (score.base |> Basics.toString)
+        ++ (if score.bonus > 1 then
+                " x " ++ (score.bonus |> Basics.toString)
+            else
+                ""
+           )

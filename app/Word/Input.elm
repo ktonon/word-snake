@@ -36,7 +36,7 @@ bonusView status score =
             [ text "duplicate" ]
 
         Good ->
-            [ text (score |> Score.toString) ]
+            [ text (score |> Score.toStringIfValid) ]
 
         _ ->
             []

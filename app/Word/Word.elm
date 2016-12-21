@@ -5,6 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (class)
 import Task
 import Word.Score as Score exposing (..)
+import Word.Validity as Validity exposing (..)
 
 
 -- MODEL
@@ -13,13 +14,12 @@ import Word.Score as Score exposing (..)
 type alias Word =
     { word : String
     , score : Score
-    , isValid : Maybe Bool
     }
 
 
 new : Eng.Config -> String -> Bonus -> ( Word, Cmd Msg )
 new engConfig word bonus =
-    ( Word word (newScore word bonus) Nothing
+    ( Word word (newScore word bonus)
     , Task.attempt WordCheckResult
         (Eng.checkIsWord engConfig (word |> String.toLower))
     )
@@ -39,14 +39,7 @@ update msg word =
         WordCheckResult result ->
             case result of
                 Ok check ->
-                    ( { word
-                        | isValid = Just check.exists
-                        , score =
-                            if check.exists then
-                                word.score
-                            else
-                                Score.invalid
-                      }
+                    ( { word | score = word.score |> Score.validate check.exists }
                     , Cmd.none
                     )
 
@@ -56,23 +49,12 @@ update msg word =
 
 order : Word -> Word -> Order
 order a b =
-    case ( a.isValid, b.isValid ) of
-        ( Just aValid, Just bValid ) ->
-            if aValid == bValid then
-                compare a.word b.word
-            else if aValid then
-                LT
-            else
-                GT
-
-        ( Nothing, Nothing ) ->
+    case Validity.order a.score.validity b.score.validity of
+        EQ ->
             compare a.word b.word
 
-        ( Just aValid, _ ) ->
-            GT
-
-        ( _, _ ) ->
-            LT
+        x ->
+            x
 
 
 
@@ -89,16 +71,4 @@ view word =
 
 getClass : Word -> Html.Attribute msg
 getClass word =
-    class
-        ("word "
-            ++ (case word.isValid of
-                    Just valid ->
-                        if valid then
-                            "valid"
-                        else
-                            "invalid"
-
-                    Nothing ->
-                        "unknown"
-               )
-        )
+    class ("word " ++ (word.score.validity |> Validity.toString))
