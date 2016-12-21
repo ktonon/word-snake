@@ -15,10 +15,10 @@ import Navigation
 import Rand exposing (Lang(..), Size(..))
 import Random.Pcg as Random
 import Routing exposing (Route(..))
-import Snake
+import Board.Snake as Snake
 import String
 import Task
-import WordList
+import Word.List
 
 
 main : Program Never Model Msg
@@ -39,7 +39,7 @@ type alias Model =
     { seed : Random.Seed
     , board : Board.Model
     , snake : Snake.Model
-    , wordList : WordList.Model
+    , wordList : Word.List.Model
     }
 
 
@@ -54,7 +54,7 @@ reset =
         (Random.initialSeed 0)
         (Board.reset [])
         Snake.reset
-        (WordList.reset "")
+        (Word.List.reset "")
 
 
 
@@ -70,7 +70,7 @@ type Msg
     | Shuffle
     | SnakeMessage Snake.Msg
     | UrlChange Navigation.Location
-    | WordListMessage WordList.Msg
+    | WordListMessage Word.List.Msg
 
 
 init : Navigation.Location -> ( Model, Cmd Msg )
@@ -110,7 +110,7 @@ update msg model =
             in
                 case result of
                     Ok config ->
-                        ( { model | wordList = WordList.reset config.apiEndpoint }, Cmd.none )
+                        ( { model | wordList = Word.List.reset config.apiEndpoint }, Cmd.none )
 
                     Err err ->
                         ( model, Cmd.none )
@@ -137,7 +137,7 @@ update msg model =
             init location
 
         WordListMessage cMsg ->
-            WordList.updateOne WordListMessage cMsg model
+            Word.List.updateOne WordListMessage cMsg model
 
 
 keyActionUpdate : KeyAction -> Model -> ( Model, Cmd Msg )
@@ -161,9 +161,8 @@ keyActionUpdate keyAction model =
                     model.snake.word
 
                 ( newWordList, cmd ) =
-                    if WordList.canAddWord model.wordList word then
-                        WordList.Word word (Snake.bonus model.snake) Nothing
-                            |> WordList.addWord model.wordList
+                    if Word.List.canAddWord model.wordList word then
+                        Word.List.addWord model.wordList word (Snake.bonus model.snake)
                     else
                         ( model.wordList, Cmd.none )
             in
@@ -205,7 +204,7 @@ view model =
         ]
         [ wordView model.snake
         , div [ class "clearfix" ]
-            [ div [ class "right" ] [ Html.map WordListMessage (WordList.view model.wordList) ]
+            [ div [ class "right" ] [ Html.map WordListMessage (Word.List.view model.wordList) ]
             , div [ class "left" ] [ boardView model ]
             ]
         , button

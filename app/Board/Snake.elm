@@ -1,7 +1,6 @@
-module Snake exposing (..)
+module Board.Snake exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (..)
 import String
 import Board.Cell as Cell
 import Board.Layer as Layer

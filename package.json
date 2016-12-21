@@ -36,6 +36,8 @@
     "eslint-plugin-jsx-a11y": "^2.1.0",
     "eslint-plugin-react": "^6.0.0",
     "json-loader": "^0.5.4",
-    "s3-website": "^2.1.0"
+    "node-sass": "^4.1.1",
+    "s3-website": "^2.1.0",
+    "sass-loader": "^4.1.1"
   }
 }

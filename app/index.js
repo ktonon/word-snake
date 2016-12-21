@@ -1,5 +1,6 @@
 require('ace-css/css/ace.css');
 require('font-awesome/css/font-awesome.css');
+require('./style.scss');
 require('./index.html');
 
 const doc = document; // eslint-disable-line no-undef
