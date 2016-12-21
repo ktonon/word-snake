@@ -1,26 +1,35 @@
-module Rand exposing (board, Lang(..), Size(..))
+module Board.Rand
+    exposing
+        ( board
+        , GeneratorVersion
+        , Seed
+        )
 
 import Random.Pcg exposing (..)
+import Routing.Lang as Lang exposing (..)
+import Routing.Shape as Shape exposing (..)
 
 
-type Lang
-    = English
+type alias GeneratorVersion =
+    Int
 
 
-type Size
-    = Board3x3
-    | Board4x4
-    | Board5x5
+type alias Seed =
+    Int
 
 
-board : Lang -> Size -> Generator (List (List Char))
+
+-- GENERATOR
+
+
+board : Lang -> Shape -> Generator (List (List Char))
 board lang =
     case lang of
         English ->
             boardWithSize englishLetter
 
 
-boardWithSize : Generator Char -> Size -> Generator (List (List Char))
+boardWithSize : Generator Char -> Shape -> Generator (List (List Char))
 boardWithSize genChar size =
     case size of
         Board3x3 ->

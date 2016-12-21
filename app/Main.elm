@@ -1,6 +1,8 @@
 port module Main exposing (..)
 
-import Board.Board as Board exposing (BoardSeed)
+import Board.Board as Board
+import Board.Rand as Rand exposing (..)
+import Board.Snake as Snake
 import Config
 import Dom
 import Html exposing (..)
@@ -12,10 +14,10 @@ import Json.Encode
 import KeyAction exposing (..)
 import Keyboard exposing (KeyCode)
 import Navigation
-import Rand exposing (Lang(..), Size(..))
 import Random.Pcg as Random
-import Routing exposing (Route(..))
-import Board.Snake as Snake
+import Routing.Lang as Lang exposing (Lang(..))
+import Routing.Routing as Routing exposing (Route(..))
+import Routing.Shape as Shape exposing (Shape(..))
 import Task
 import Word.Candidate exposing (Status(..))
 import Word.Input
@@ -38,11 +40,19 @@ main =
 
 
 type alias Model =
-    { seed : Random.Seed
+    { lang : Lang
+    , shape : Shape
+    , seed : Random.Seed
     , board : Board.Model
     , snake : Snake.Model
     , wordList : Word.List.Model
     }
+
+
+type SizeChange
+    = Smaller
+    | Same
+    | Bigger
 
 
 setSnake : Model -> Snake.Model -> Model
@@ -53,6 +63,8 @@ setSnake model =
 reset : Model
 reset =
     Model
+        Lang.default
+        Shape.default
         (Random.initialSeed 0)
         (Board.reset [])
         Snake.reset
@@ -67,9 +79,9 @@ type Msg
     = LoadConfig Json.Encode.Value
     | BoardMessage Board.Msg
     | FocusResult (Result Dom.Error ())
-    | GotoBoard Board.BoardSeed
+    | GotoBoard Lang Shape GeneratorVersion Seed
     | KeyDown KeyCode
-    | Shuffle
+    | Shuffle SizeChange
     | SnakeMessage Snake.Msg
     | UrlChange Navigation.Location
     | WordListMessage Word.List.Msg
@@ -82,23 +94,34 @@ init location =
             Routing.routeFromLocation location
     in
         case route of
-            RandomBoardRoute ->
+            NotFoundRoute ->
+                ( reset, Cmd.none )
+
+            RandomPlayRoute lang shape ->
                 let
                     gen =
                         Random.int 0 1000000000000
                 in
-                    ( reset, Random.generate GotoBoard gen )
+                    ( reset, Random.generate (GotoBoard lang shape 1) gen )
 
-            BoardRoute val ->
+            PlayRoute lang shape version seedValue ->
                 let
                     seed =
-                        Random.initialSeed val
+                        Random.initialSeed seedValue
 
                     ( matrix, newSeed ) =
-                        Random.step (Rand.board English Board4x4) seed
+                        Random.step (Rand.board lang shape) seed
                 in
-                    ( { reset | board = Board.reset matrix }
-                    , Task.attempt FocusResult (Dom.blur "shuffle")
+                    ( { reset
+                        | lang = lang
+                        , shape = shape
+                        , board = Board.reset matrix
+                      }
+                    , [ Task.attempt FocusResult (Dom.blur "shuffle")
+                      , Task.attempt FocusResult (Dom.blur "shuffle-smaller")
+                      , Task.attempt FocusResult (Dom.blur "shuffle-bigger")
+                      ]
+                        |> Cmd.batch
                     )
 
 
@@ -123,14 +146,18 @@ update msg model =
         FocusResult error ->
             ( model, Cmd.none )
 
-        GotoBoard boardSeed ->
-            ( model, Navigation.newUrl ("#board/" ++ toString boardSeed) )
+        GotoBoard lang shape version seed ->
+            ( model, Routing.playUrl lang shape version seed )
 
         KeyDown keyCode ->
             keyActionUpdate (actionFromCode keyCode) model
 
-        Shuffle ->
-            ( model, Navigation.newUrl "#" )
+        Shuffle sizeChange ->
+            let
+                s =
+                    newShape model.shape sizeChange
+            in
+                ( model, Routing.randomPlayUrl model.lang s )
 
         SnakeMessage cMsg ->
             Snake.updateOne SnakeMessage cMsg model
@@ -203,33 +230,91 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div
-        [ style [ ( "padding", "50px" ) ]
-        ]
-        [ Word.Input.view model.snake.word
+        [ class "px2" ]
+        [ shuffleButtons model.shape
+        , Word.Input.view model.snake.word
             (Snake.bonus model.snake |> Score.newScore model.snake.word)
             (Word.List.candidateStatus model.wordList model.snake.word)
         , div [ class "clearfix" ]
             [ div [ class "col col-9" ] [ boardView model ]
             , div [] [ Html.map WordListMessage (Word.List.view model.wordList) ]
             ]
-        , button
-            [ class "btn bg-gray rounded"
-            , id "shuffle"
-            , onClick Shuffle
-            ]
-            [ text "Shuffle" ]
         ]
+
+
+shuffleButtons : Shape -> Html Msg
+shuffleButtons shape =
+    let
+        ( showSmaller, showBigger ) =
+            case shape of
+                Board3x3 ->
+                    ( False, True )
+
+                Board5x5 ->
+                    ( True, False )
+
+                _ ->
+                    ( True, True )
+    in
+        div [ class "center py2" ]
+            [ shuffleButton "shuffle-smaller" "" "fa fa-th-large" Smaller showSmaller
+            , shuffleButton "shuffle" "Shuffle" "" Same True
+            , shuffleButton "shuffle-bigger" "" "fa fa-th" Bigger showBigger
+            ]
+
+
+shuffleButton : String -> String -> String -> SizeChange -> Bool -> Html Msg
+shuffleButton id_ label icon sizeChange show =
+    if show then
+        a
+            [ class ("shuffle m1 " ++ icon)
+            , id id_
+            , onClick (Shuffle sizeChange)
+            ]
+            [ text label ]
+    else
+        span [ class ("shuffle disabled m1 " ++ icon) ] [ text label ]
 
 
 boardView : Model -> Html Msg
 boardView model =
     div
-        [ style
-            [ ( "width", "600px" )
-            , ( "height", "600px" )
-            , ( "position", "relative" )
-            ]
-        ]
+        [ boardStyle model.shape ]
         [ Html.map BoardMessage (Board.view model.board)
         , Html.map SnakeMessage (Snake.view model.snake)
         ]
+
+
+boardStyle : Shape -> Html.Attribute msg
+boardStyle shape =
+    let
+        n =
+            Shape.toInt shape
+
+        cssLength =
+            (n * 150 |> toString) ++ "px"
+    in
+        style
+            [ ( "width", cssLength )
+            , ( "height", cssLength )
+            , ( "position", "relative" )
+            ]
+
+
+newShape : Shape -> SizeChange -> Shape
+newShape shape sizeChange =
+    case ( shape, sizeChange ) of
+        ( Board3x3, Bigger ) ->
+            Board4x4
+
+        ( Board4x4, Smaller ) ->
+            Board3x3
+
+        ( Board4x4, Bigger ) ->
+            Board5x5
+
+        ( Board5x5, Smaller ) ->
+            Board4x4
+
+        ( board, _ ) ->
+            board

@@ -9,10 +9,6 @@ import ChildUpdate exposing (updateOne)
 -- MODEL
 
 
-type alias BoardSeed =
-    Int
-
-
 type alias Model =
     { layer : Layer.Model
     }

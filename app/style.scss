@@ -6,6 +6,19 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.shuffle {
+  color: #666;
+  cursor: pointer;
+  font-size: 18pt;
+  &:hover {
+    color: #369;
+  }
+  &.disabled, &.disabled:hover {
+    color: #ccc;
+    cursor: auto;
+  }
+}
+
 .word-input {
   .box {
     border-radius: 20px;
