@@ -44,6 +44,11 @@ newScore word bonus =
             bonus
 
 
+invalid : Score
+invalid =
+    Score 1 -1
+
+
 toInt : Score -> Int
 toInt score =
     score.base * score.bonus
@@ -55,12 +60,19 @@ toInt score =
 
 view : Score -> Html msg
 view score =
-    div [ class "score" ] [ text (score |> toInt |> toString) ]
+    div [ class "score col col-1" ]
+        [ text (score |> toString)
+        ]
 
 
-
--- bonusText =
---     if (word.bonus > 1) then
---         "(x" ++ (toString word.bonus) ++ ") "
---     else
---         ""
+toString : Score -> String
+toString score =
+    if (score.bonus == -1) then
+        "-1"
+    else
+        (score.base |> Basics.toString)
+            ++ (if score.bonus > 1 then
+                    " x " ++ (score.bonus |> Basics.toString)
+                else
+                    ""
+               )

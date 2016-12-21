@@ -16,9 +16,11 @@ import Rand exposing (Lang(..), Size(..))
 import Random.Pcg as Random
 import Routing exposing (Route(..))
 import Board.Snake as Snake
-import String
 import Task
+import Word.Candidate exposing (Status(..))
+import Word.Input
 import Word.List
+import Word.Score as Score
 
 
 main : Program Never Model Msg
@@ -93,7 +95,7 @@ init location =
                         Random.initialSeed val
 
                     ( matrix, newSeed ) =
-                        Random.step (Rand.board English Board5x5) seed
+                        Random.step (Rand.board English Board4x4) seed
                 in
                     ( { reset | board = Board.reset matrix }
                     , Task.attempt FocusResult (Dom.blur "shuffle")
@@ -161,10 +163,12 @@ keyActionUpdate keyAction model =
                     model.snake.word
 
                 ( newWordList, cmd ) =
-                    if Word.List.canAddWord model.wordList word then
-                        Word.List.addWord model.wordList word (Snake.bonus model.snake)
-                    else
-                        ( model.wordList, Cmd.none )
+                    case Word.List.candidateStatus model.wordList word of
+                        Good ->
+                            Word.List.addWord model.wordList word (Snake.bonus model.snake)
+
+                        _ ->
+                            ( model.wordList, Cmd.none )
             in
                 ( { model
                     | wordList = newWordList
@@ -199,13 +203,14 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div
-        [ class "center"
-        , style [ ( "padding", "50px" ) ]
+        [ style [ ( "padding", "50px" ) ]
         ]
-        [ wordView model.snake
+        [ Word.Input.view model.snake.word
+            (Snake.bonus model.snake |> Score.newScore model.snake.word)
+            (Word.List.candidateStatus model.wordList model.snake.word)
         , div [ class "clearfix" ]
-            [ div [ class "right" ] [ Html.map WordListMessage (Word.List.view model.wordList) ]
-            , div [ class "left" ] [ boardView model ]
+            [ div [ class "col col-9" ] [ boardView model ]
+            , div [] [ Html.map WordListMessage (Word.List.view model.wordList) ]
             ]
         , button
             [ class "btn bg-gray rounded"
@@ -220,55 +225,11 @@ boardView : Model -> Html Msg
 boardView model =
     div
         [ style
-            [ ( "width", "750px" )
-            , ( "height", "750px" )
+            [ ( "width", "600px" )
+            , ( "height", "600px" )
             , ( "position", "relative" )
             ]
         ]
         [ Html.map BoardMessage (Board.view model.board)
         , Html.map SnakeMessage (Snake.view model.snake)
         ]
-
-
-wordView : Snake.Model -> Html Msg
-wordView snake =
-    let
-        showWord =
-            if String.isEmpty snake.word then
-                "Start typing..."
-            else
-                snake.word
-
-        color =
-            if String.isEmpty snake.word then
-                "#f8f8f8"
-            else
-                "#369"
-    in
-        div []
-            [ div
-                [ class "center clearfix"
-                , style
-                    [ ( "font-size", "70px" )
-                    , ( "border", "dashed 1px #999" )
-                    , ( "border-radius", "20px" )
-                    , ( "color", color )
-                    ]
-                ]
-                [ text showWord
-                , div [ class "right", style [ ( "padding-right", "20px" ) ] ]
-                    (bonusView snake)
-                ]
-            ]
-
-
-bonusView : Snake.Model -> List (Html Msg)
-bonusView snake =
-    let
-        bonus =
-            Snake.bonus snake
-    in
-        if bonus > 1 then
-            [ text ("x" ++ (toString bonus)) ]
-        else
-            []

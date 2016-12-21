@@ -1,11 +1,10 @@
 module Word.Word exposing (..)
 
-import ChildUpdate
 import EnglishDictionary as Eng exposing (WordCheck)
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Task
-import Word.Score exposing (..)
+import Word.Score as Score exposing (..)
 
 
 -- MODEL
@@ -27,19 +26,6 @@ new engConfig word bonus =
 
 
 
--- UPDATE FOR PARENT
-
-
-type alias HasMany model =
-    { model | words : List Word }
-
-
-updateMany : (String -> Msg -> msg) -> String -> Msg -> HasMany m -> ( HasMany m, Cmd msg )
-updateMany =
-    ChildUpdate.updateMany update .word .words (\m x -> { m | words = x })
-
-
-
 -- UPDATE
 
 
@@ -53,10 +39,40 @@ update msg word =
         WordCheckResult result ->
             case result of
                 Ok check ->
-                    ( { word | isValid = Just check.exists }, Cmd.none )
+                    ( { word
+                        | isValid = Just check.exists
+                        , score =
+                            if check.exists then
+                                word.score
+                            else
+                                Score.invalid
+                      }
+                    , Cmd.none
+                    )
 
                 Err _ ->
                     ( word, Cmd.none )
+
+
+order : Word -> Word -> Order
+order a b =
+    case ( a.isValid, b.isValid ) of
+        ( Just aValid, Just bValid ) ->
+            if aValid == bValid then
+                compare a.word b.word
+            else if aValid then
+                LT
+            else
+                GT
+
+        ( Nothing, Nothing ) ->
+            compare a.word b.word
+
+        ( Just aValid, _ ) ->
+            GT
+
+        ( _, _ ) ->
+            LT
 
 
 
@@ -65,7 +81,10 @@ update msg word =
 
 view : Word -> Html msg
 view word =
-    div [ getClass word ] [ text word.word ]
+    div [ getClass word ]
+        [ div [ class "text col col-2" ] [ text (word.word |> String.toLower) ]
+        , Score.view word.score
+        ]
 
 
 getClass : Word -> Html.Attribute msg
