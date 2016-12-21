@@ -5,8 +5,8 @@ module Board.Rand
         , Seed
         )
 
+import Config.Lang as Lang exposing (..)
 import Random.Pcg exposing (..)
-import Routing.Lang as Lang exposing (..)
 import Routing.Shape as Shape exposing (..)
 
 

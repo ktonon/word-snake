@@ -4,6 +4,7 @@ const rc = require('rc');
 
 const conf = rc('wordSnake', {
   apiEndpoint: 'http://localhost:7631',
+  language: 'en',
 });
 
 const outConf = path.resolve(`${__dirname}/../app/config.json`);

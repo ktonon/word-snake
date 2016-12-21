@@ -3,7 +3,7 @@ port module Main exposing (..)
 import Board.Board as Board
 import Board.Rand as Rand exposing (..)
 import Board.Snake as Snake
-import Config
+import Config.Config as Config
 import Dom
 import Html exposing (..)
 import Html exposing (Html, div, button, text)
@@ -15,7 +15,6 @@ import KeyAction exposing (..)
 import Keyboard exposing (KeyCode)
 import Navigation
 import Random.Pcg as Random
-import Routing.Lang as Lang exposing (Lang(..))
 import Routing.Routing as Routing exposing (Route(..))
 import Routing.Shape as Shape exposing (Shape(..))
 import Task
@@ -28,7 +27,7 @@ import Word.Score as Score
 main : Program Never Model Msg
 main =
     Navigation.program UrlChange
-        { init = init
+        { init = init Config.empty
         , update = update
         , view = view
         , subscriptions = subscriptions
@@ -40,7 +39,7 @@ main =
 
 
 type alias Model =
-    { lang : Lang
+    { config : Config.Model
     , shape : Shape
     , seed : Random.Seed
     , board : Board.Model
@@ -60,10 +59,10 @@ setSnake model =
     \x -> { model | snake = x }
 
 
-reset : Model
-reset =
+reset : Config.Model -> Model
+reset config =
     Model
-        Lang.default
+        config
         Shape.default
         (Random.initialSeed 0)
         (Board.reset [])
@@ -79,7 +78,7 @@ type Msg
     = LoadConfig Json.Encode.Value
     | BoardMessage Board.Msg
     | FocusResult (Result Dom.Error ())
-    | GotoBoard Lang Shape GeneratorVersion Seed
+    | GotoBoard Shape GeneratorVersion Seed
     | KeyDown KeyCode
     | Shuffle SizeChange
     | SnakeMessage Snake.Msg
@@ -87,34 +86,36 @@ type Msg
     | WordListMessage Word.List.Msg
 
 
-init : Navigation.Location -> ( Model, Cmd Msg )
-init location =
+init : Config.Model -> Navigation.Location -> ( Model, Cmd Msg )
+init config location =
     let
+        model =
+            reset config
+
         route =
             Routing.routeFromLocation location
     in
         case route of
             NotFoundRoute ->
-                ( reset, Cmd.none )
+                ( model, Cmd.none )
 
-            RandomPlayRoute lang shape ->
+            RandomPlayRoute shape ->
                 let
                     gen =
                         Random.int 0 1000000000000
                 in
-                    ( reset, Random.generate (GotoBoard lang shape 1) gen )
+                    ( model, Random.generate (GotoBoard shape 1) gen )
 
-            PlayRoute lang shape version seedValue ->
+            PlayRoute shape version seedValue ->
                 let
                     seed =
                         Random.initialSeed seedValue
 
                     ( matrix, newSeed ) =
-                        Random.step (Rand.board lang shape) seed
+                        Random.step (Rand.board config.language shape) seed
                 in
-                    ( { reset
-                        | lang = lang
-                        , shape = shape
+                    ( { model
+                        | shape = shape
                         , board = Board.reset matrix
                       }
                     , [ Task.attempt FocusResult (Dom.blur "shuffle")
@@ -146,8 +147,8 @@ update msg model =
         FocusResult error ->
             ( model, Cmd.none )
 
-        GotoBoard lang shape version seed ->
-            ( model, Routing.playUrl lang shape version seed )
+        GotoBoard shape version seed ->
+            ( model, Routing.playUrl shape version seed )
 
         KeyDown keyCode ->
             keyActionUpdate (actionFromCode keyCode) model
@@ -157,13 +158,13 @@ update msg model =
                 s =
                     newShape model.shape sizeChange
             in
-                ( model, Routing.randomPlayUrl model.lang s )
+                ( model, Routing.randomPlayUrl s )
 
         SnakeMessage cMsg ->
             Snake.updateOne SnakeMessage cMsg model
 
         UrlChange location ->
-            init location
+            init model.config location
 
         WordListMessage cMsg ->
             Word.List.updateOne WordListMessage cMsg model
