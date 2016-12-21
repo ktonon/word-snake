@@ -39,8 +39,21 @@ body {
 }
 
 .word {
-  .text, .score { cursor: pointer; }
-  &.valid { color: #060; text-shadow: 0 0 2px #6f6; }
+  &.valid {
+    color: #060;
+    text-shadow: 0 0 2px #6f6;
+    .text { cursor: pointer; }
+  }
   &.invalid { color: #600; text-shadow: 0 0 2px #f66; }
   &.unknown { color: #999; }
+}
+
+.definition-list {
+  color: #999;
+  cursor: pointer;
+  font-size: 18px;
+  li {
+    list-style-type: none;
+    .part-of-speech { font-weight: bold; }
+  }
 }

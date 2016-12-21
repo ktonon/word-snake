@@ -101,12 +101,16 @@ view model =
         )
 
 
-wordsView : List Word -> List (Html msg)
+wordsView : List Word -> List (Html Msg)
 wordsView words =
     if List.isEmpty words then
         [ div [ class "no-words col col-3" ] [ text "no words yet" ] ]
     else
-        List.map Word.view words
+        List.map
+            (\word ->
+                Html.map (WordMsg word.word) (Word.view word)
+            )
+            words
 
 
 totalScore : Model -> Int
