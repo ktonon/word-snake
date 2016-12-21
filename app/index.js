@@ -8,7 +8,7 @@ const config = require('./config.json');
 const Elm = require('./Main.elm');
 
 const font = doc.createElement('link');
-font.setAttribute('href', 'https://fonts.googleapis.com/css?family=Roboto:400');
+font.setAttribute('href', 'https://fonts.googleapis.com/css?family=Josefin+Sans');
 font.setAttribute('rel', 'stylesheet');
 doc.head.appendChild(font);
 
