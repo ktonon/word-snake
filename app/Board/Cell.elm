@@ -13,6 +13,7 @@ type alias Model =
     , letter : String
     , x : Int
     , y : Int
+    , width : Int
     , adj : List Id
     }
 
@@ -29,19 +30,24 @@ type alias Pos =
     ( Int, Int )
 
 
+setWidth : Int -> Model -> Model
+setWidth w cell =
+    { cell | width = w }
+
+
 makeId : Pos -> Id
 makeId ( x, y ) =
     (toString x) ++ "_" ++ (toString y)
 
 
-init : Bounds -> Int -> Int -> Char -> Model
-init bounds x y letter =
+init : Int -> Bounds -> Int -> Int -> Char -> Model
+init width bounds x y letter =
     let
         pos =
             ( x, y )
     in
         findNeighbours bounds pos
-            |> Model (makeId pos) (String.fromChar letter) x y
+            |> Model (makeId pos) (String.fromChar letter) x y width
 
 
 findNeighbours : Bounds -> Pos -> List Id
@@ -126,12 +132,12 @@ view dtype cell =
 commonStyle : Model -> List ( String, String )
 commonStyle cell =
     [ ( "position", "absolute" )
-    , ( "left", (toString (cell.x * 150)) ++ "px" )
-    , ( "top", (toString (cell.y * 150)) ++ "px" )
-    , ( "font-size", "64pt" )
+    , ( "left", (toString (cell.x * cell.width)) ++ "px" )
+    , ( "top", (toString (cell.y * cell.width)) ++ "px" )
+    , ( "font-size", (toString ((cell.width |> toFloat) * 0.6 |> round)) ++ "px" )
     , ( "margin", "5px" )
-    , ( "width", "140px" )
-    , ( "height", "140px" )
+    , ( "width", (toString (cell.width - 10)) ++ "px" )
+    , ( "height", (toString (cell.width - 10)) ++ "px" )
     , ( "color", "#036" )
     , ( "border-radius", "20px" )
     ]

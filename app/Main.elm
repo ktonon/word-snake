@@ -26,6 +26,7 @@ import Word.Candidate exposing (Status(..))
 import Word.Input
 import Word.List
 import Word.Score as Score
+import Window
 
 
 main : Program Never Model Msg
@@ -72,7 +73,7 @@ reset config =
     Model
         config
         ""
-        (Board.reset [])
+        (Board.reset (cellWidth config Shape.default) [])
         Loading
         (Random.initialSeed 0)
         Shape.default
@@ -96,6 +97,8 @@ type Msg
     | Tick Time
     | UrlChange Navigation.Location
     | WordListMessage Word.List.Msg
+    | WindowSize Window.Size
+    | WindowSizeGet (Result String Window.Size)
 
 
 init : Config.Model -> Navigation.Location -> ( Model, Cmd Msg )
@@ -114,7 +117,7 @@ init config location =
                     , mode = Playing
                     , timer = Timer.reset Board4x4
                     , board =
-                        Board.reset
+                        Board.reset (cellWidth config Board4x4)
                             [ [ '4', 'N', 'F', 'O' ]
                             , [ '0', 'O', 'P', 'U' ]
                             , [ '4', 'T', 'A', 'N' ]
@@ -141,7 +144,7 @@ init config location =
                         | shape = shape
                         , mode = Playing
                         , timer = Timer.reset shape
-                        , board = Board.reset matrix
+                        , board = Board.reset (cellWidth config shape) matrix
                       }
                     , [ Task.attempt FocusResult (Dom.blur "shuffle")
                       , Task.attempt FocusResult (Dom.blur "shuffle-smaller")
@@ -206,6 +209,49 @@ update msg model =
         WordListMessage cMsg ->
             Word.List.updateOne WordListMessage cMsg model
 
+        WindowSizeGet result ->
+            case result of
+                Ok size ->
+                    let
+                        newConfig =
+                            Config.setWindowSize size model.config
+                    in
+                        ( { model
+                            | config = newConfig
+                            , board = Board.setCellWidth (cellWidth newConfig model.shape) model.board
+                          }
+                        , Cmd.none
+                        )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        WindowSize size ->
+            ( { model
+                | config = Config.setWindowSize size model.config
+                , board = Board.setCellWidth (cellWidth model.config model.shape) model.board
+              }
+            , Cmd.none
+            )
+
+
+cellWidth : Config.Model -> Shape -> Int
+cellWidth conf shape =
+    let
+        n =
+            Shape.toInt shape
+
+        s =
+            conf.windowSize
+
+        x =
+            (s.width |> toFloat) * 0.7 |> round
+
+        y =
+            s.height - 200
+    in
+        (min x y) // n
+
 
 refreshWords : Config.Model -> Model -> ( Model, Cmd Msg )
 refreshWords config model =
@@ -220,7 +266,10 @@ refreshWords config model =
             | config = config
             , wordList = newWordList
           }
-        , Cmd.map WordListMessage cmd
+        , Cmd.batch
+            [ Cmd.map WordListMessage cmd
+            , Task.attempt WindowSizeGet Window.size
+            ]
         )
 
 
@@ -295,16 +344,21 @@ port config : (Json.Encode.Value -> msg) -> Sub msg
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    case model.mode of
-        Playing ->
-            Sub.batch
-                [ Keyboard.downs KeyDown
-                , Time.every Time.second Tick
-                , config LoadConfig
-                ]
+    [ Window.resizes WindowSize
+    , config LoadConfig
+    ]
+        |> List.append
+            (case model.mode of
+                Playing ->
+                    [ Keyboard.downs KeyDown
+                    , Time.every Time.second Tick
+                    , config LoadConfig
+                    ]
 
-        _ ->
-            config LoadConfig
+                _ ->
+                    []
+            )
+        |> Sub.batch
 
 
 
@@ -337,8 +391,8 @@ playingView model =
             (Word.List.candidateStatus model.wordList model.snake.word)
             (Timer.view model.timer)
         , div [ class "clearfix" ]
-            [ div [ class "col col-9" ] [ boardView model ]
-            , Html.map WordListMessage (Word.List.view model.wordList)
+            [ div [ class "col col-3" ] [ Html.map WordListMessage (Word.List.view model.wordList) ]
+            , div [ class "col col-9 mt3" ] [ boardView model ]
             ]
         , Util.forkMe model.config
         ]
@@ -356,11 +410,14 @@ boardView model =
 boardStyle : Shape -> Html.Attribute msg
 boardStyle shape =
     let
+        n =
+            shape |> Shape.toInt |> \n -> n * 150
+
         cssLength =
-            (shape |> Shape.toInt |> \n -> n * 150 |> toString) ++ "px"
+            (\n -> (n |> toString) ++ "px")
     in
         style
-            [ ( "width", cssLength )
-            , ( "height", cssLength )
+            [ ( "width", n |> cssLength )
+            , ( "height", n |> cssLength )
             , ( "position", "relative" )
             ]

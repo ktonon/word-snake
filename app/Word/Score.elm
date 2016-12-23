@@ -86,7 +86,7 @@ view score =
                 _ ->
                     ""
     in
-        div [ class ("score col col-1" ++ icon) ]
+        div [ class ("score " ++ icon) ]
             [ text (score |> toString) ]
 
 

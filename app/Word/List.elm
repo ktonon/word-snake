@@ -163,10 +163,11 @@ validate apiEndpoint bonusFinder model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "word-list mt3" ]
+    div [ class "word-list mt3 clearfix" ]
         (div []
-            [ div [ class "header col col-2" ] [ text "Score" ]
-            , div [ class "header total col col-1" ] [ text (totalScore model |> Basics.toString) ]
+            [ div [ class "header col col-6" ] [ text "Score" ]
+            , div [ class "header total col col-5" ] [ text (totalScore model |> Basics.toString) ]
+            , div [ class "col col-1" ] []
             ]
             :: (wordsView model.words)
         )
@@ -175,7 +176,7 @@ view model =
 wordsView : List Word -> List (Html Msg)
 wordsView words =
     if List.isEmpty words then
-        [ div [ class "no-words col col-3" ] [ text "no words yet" ] ]
+        [ div [ class "no-words col col-12" ] [ text "no words yet" ] ]
     else
         List.map
             (\word ->

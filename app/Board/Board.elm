@@ -18,13 +18,22 @@ type alias Model =
     }
 
 
-reset : List (List Char) -> Model
-reset grid =
-    grid |> initCells |> Layer.Model 0 |> Model
+defaultCellWidth : Int
+defaultCellWidth =
+    150
 
 
-initCells : List (List Char) -> List Cell.Model
-initCells grid =
+reset : Int -> List (List Char) -> Model
+reset cellWidth grid =
+    let
+        columns =
+            List.length grid
+    in
+        grid |> initCells cellWidth |> Layer.Model 0 |> Model
+
+
+initCells : Int -> List (List Char) -> List Cell.Model
+initCells cellWidth grid =
     let
         bounds =
             ( 0, List.length grid - 1 )
@@ -32,9 +41,14 @@ initCells grid =
         grid
             |> List.indexedMap
                 (\x letters ->
-                    letters |> List.indexedMap (Cell.init bounds x)
+                    letters |> List.indexedMap (Cell.init cellWidth bounds x)
                 )
             |> List.concat
+
+
+setCellWidth : Int -> Model -> Model
+setCellWidth w model =
+    { model | layer = model.layer |> Layer.setCellWidth w }
 
 
 
@@ -70,7 +84,7 @@ fromToken token =
                 (token
                     |> String.toList
                     |> chunksOfLeft s
-                    |> reset
+                    |> reset defaultCellWidth
                 )
         else
             Err ("Invalid token: " ++ token)

@@ -20,18 +20,16 @@ body {
 }
 
 .word-input {
+  font-size: 70px;
+  text-align: left;
   .box {
     border-radius: 20px;
     border: dashed 1px #999;
-    font-size: 70px;
   }
   .bonus {
-    font-size: 40px;
   }
   .timer {
     color: black;
-    font-size: 40px;
-    text-align: right;
   }
 }
 

@@ -143,11 +143,12 @@ view word =
     div []
         [ div [ getClass word ]
             [ div
-                [ class "text col col-2"
+                [ class "text col col-8"
                 , onClick ToggleDefinition
                 ]
                 [ text (word.word |> String.toLower) ]
-            , Score.view word.score
+            , div [ class "col col-3" ] [ Score.view word.score ]
+            , div [ class "col col-1" ] []
             ]
         , definitionView word.definition
         ]

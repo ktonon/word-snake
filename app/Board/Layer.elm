@@ -36,6 +36,11 @@ findCells layer letter =
         |> List.filter (\cell -> cell.letter == letter)
 
 
+setCellWidth : Int -> Model -> Model
+setCellWidth w layer =
+    { layer | cells = layer.cells |> List.map (Cell.setWidth w) }
+
+
 
 -- UPDATE FOR PARENT
 

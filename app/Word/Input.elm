@@ -20,10 +20,11 @@ view word score status timer =
     in
         div
             [ statusClass status "word-input clearfix" ]
-            [ div [ class "box rounded center col col-8" ] [ text showWord ]
-            , div [ class "bonus pl2 col col-3" ]
-                (bonusView status score)
-            , div [ class "timer col col-1" ] [ timer ]
+            [ div [ class "timer col col-3" ] [ timer ]
+            , div [ class "box rounded px2 col col-9" ]
+                [ text showWord
+                , div [ class "bonus right" ] (bonusView status score)
+                ]
             ]
 
 
