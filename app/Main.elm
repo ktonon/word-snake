@@ -97,7 +97,6 @@ type Msg
     | Tick Time
     | UrlChange Navigation.Location
     | WordListMessage Word.List.Msg
-    | WindowSize Window.Size
     | WindowSizeGet (Result String Window.Size)
 
 
@@ -226,14 +225,6 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        WindowSize size ->
-            ( { model
-                | config = Config.setWindowSize size model.config
-                , board = Board.setCellWidth (cellWidth model.config model.shape) model.board
-              }
-            , Cmd.none
-            )
-
 
 cellWidth : Config.Model -> Shape -> Int
 cellWidth conf shape =
@@ -275,25 +266,29 @@ refreshWords config model =
 
 tick : Model -> Time -> ( Model, Cmd Msg )
 tick model time =
-    case model.mode of
-        Playing ->
-            let
-                newTimer =
-                    Timer.tick model.timer time
-            in
-                if Timer.isExpired newTimer then
-                    ( { model | timer = Timer.zero, mode = Reviewing }
-                    , Token
-                        model.board
-                        model.shape
-                        model.wordList
-                        |> Routing.reviewUrl
-                    )
-                else
-                    ( { model | timer = newTimer }, Cmd.none )
+    let
+        getSize =
+            Task.attempt WindowSizeGet Window.size
+    in
+        case model.mode of
+            Playing ->
+                let
+                    newTimer =
+                        Timer.tick model.timer time
+                in
+                    if Timer.isExpired newTimer then
+                        ( { model | timer = Timer.zero, mode = Reviewing }
+                        , Token
+                            model.board
+                            model.shape
+                            model.wordList
+                            |> Routing.reviewUrl
+                        )
+                    else
+                        ( { model | timer = newTimer }, getSize )
 
-        _ ->
-            ( model, Cmd.none )
+            _ ->
+                ( model, getSize )
 
 
 keyActionUpdate : KeyAction -> Model -> ( Model, Cmd Msg )
@@ -344,15 +339,13 @@ port config : (Json.Encode.Value -> msg) -> Sub msg
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    [ Window.resizes WindowSize
-    , config LoadConfig
+    [ config LoadConfig
+    , Time.every Time.second Tick
     ]
         |> List.append
             (case model.mode of
                 Playing ->
                     [ Keyboard.downs KeyDown
-                    , Time.every Time.second Tick
-                    , config LoadConfig
                     ]
 
                 _ ->
