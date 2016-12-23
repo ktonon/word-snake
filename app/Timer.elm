@@ -23,7 +23,7 @@ reset shape =
         0
         (case shape of
             Board3x3 ->
-                Time.second * 10
+                Time.second * 45
 
             Board4x4 ->
                 Time.minute * 3

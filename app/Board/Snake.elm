@@ -1,10 +1,11 @@
 module Board.Snake exposing (..)
 
+import ChildUpdate
 import Html exposing (..)
-import String
 import Board.Cell as Cell
 import Board.Layer as Layer
-import ChildUpdate
+import String
+import Word.Score exposing (Bonus)
 
 
 -- MODEL
@@ -30,6 +31,24 @@ reset =
 bonus : Model -> Int
 bonus model =
     List.length model.layers
+
+
+findSnake : Layer.Model -> String -> Model
+findSnake layer word =
+    word
+        |> String.split ""
+        |> List.foldl
+            (\letter snake ->
+                letter
+                    |> Layer.findCells layer
+                    |> tryAddCells snake letter
+            )
+            reset
+
+
+findBonus : Layer.Model -> String -> Bonus
+findBonus layer =
+    (findSnake layer) >> bonus
 
 
 

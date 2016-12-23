@@ -1,8 +1,8 @@
 module Board.Layer exposing (..)
 
-import Html exposing (..)
 import Board.Cell as Cell
 import ChildUpdate
+import Html exposing (..)
 
 
 -- MODEL
@@ -16,6 +16,13 @@ type alias Model =
 
 type alias Index =
     Int
+
+
+toToken : Model -> String
+toToken layer =
+    layer.cells
+        |> List.map .letter
+        |> String.join ""
 
 
 new : Int -> Model

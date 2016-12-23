@@ -16,6 +16,7 @@ import Navigation
 import Random.Pcg as Random
 import Routing.Routing as Routing exposing (Route(..))
 import Routing.Shape as Shape exposing (Shape(..))
+import Routing.Token as Token exposing (..)
 import Shuffle exposing (SizeChange)
 import Task
 import Time exposing (Time)
@@ -55,9 +56,10 @@ type alias Model =
 
 
 type Mode
-    = Playing
+    = Loading
+    | Playing
     | Reviewing
-    | Loading
+    | Comparing
 
 
 setSnake : Model -> Snake.Model -> Model
@@ -76,7 +78,7 @@ reset config =
         Shape.default
         Snake.reset
         (Timer.reset Shape.default)
-        (Word.List.reset "")
+        (Word.List.reset config.apiEndpoint)
 
 
 
@@ -148,6 +150,15 @@ init config location =
                         |> Cmd.batch
                     )
 
+            ReviewRoute token ->
+                refreshWords model.config
+                    { model
+                        | board = token.board
+                        , shape = token.shape
+                        , wordList = token.words
+                        , mode = Reviewing
+                    }
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -171,12 +182,7 @@ update msg model =
             in
                 case result of
                     Ok config ->
-                        ( { model
-                            | config = config
-                            , wordList = Word.List.reset config.apiEndpoint
-                          }
-                        , Cmd.none
-                        )
+                        refreshWords config model
 
                     Err err ->
                         ( { model | configError = err }, Cmd.none )
@@ -192,7 +198,7 @@ update msg model =
             Snake.updateOne SnakeMessage cMsg model
 
         Tick time ->
-            ( tick model time, Cmd.none )
+            tick model time
 
         UrlChange location ->
             init model.config location
@@ -201,7 +207,24 @@ update msg model =
             Word.List.updateOne WordListMessage cMsg model
 
 
-tick : Model -> Time -> Model
+refreshWords : Config.Model -> Model -> ( Model, Cmd Msg )
+refreshWords config model =
+    let
+        ( newWordList, cmd ) =
+            Word.List.validate
+                config.apiEndpoint
+                (Snake.findBonus model.board.layer)
+                model.wordList
+    in
+        ( { model
+            | config = config
+            , wordList = newWordList
+          }
+        , Cmd.map WordListMessage cmd
+        )
+
+
+tick : Model -> Time -> ( Model, Cmd Msg )
 tick model time =
     case model.mode of
         Playing ->
@@ -210,12 +233,18 @@ tick model time =
                     Timer.tick model.timer time
             in
                 if Timer.isExpired newTimer then
-                    { model | timer = Timer.zero, mode = Reviewing }
+                    ( { model | timer = Timer.zero, mode = Reviewing }
+                    , Token
+                        model.board
+                        model.shape
+                        model.wordList
+                        |> Routing.reviewUrl
+                    )
                 else
-                    { model | timer = newTimer }
+                    ( { model | timer = newTimer }, Cmd.none )
 
         _ ->
-            model
+            ( model, Cmd.none )
 
 
 keyActionUpdate : KeyAction -> Model -> ( Model, Cmd Msg )
@@ -293,6 +322,9 @@ view model =
 
         Reviewing ->
             playingView model
+
+        Comparing ->
+            h1 [ class "m4" ] [ text "Comparing..." ]
 
 
 playingView : Model -> Html Msg

@@ -1,8 +1,8 @@
 module Board.Cell exposing (..)
 
+import ChildUpdate
 import Html exposing (..)
 import Html.Attributes exposing (class, style)
-import ChildUpdate
 
 
 -- MODEL

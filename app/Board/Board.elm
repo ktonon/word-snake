@@ -1,9 +1,13 @@
 module Board.Board exposing (..)
 
+import ChildUpdate exposing (updateOne)
+import Exts.Json.Decode exposing (parseWith)
 import Html exposing (..)
 import Board.Cell as Cell
 import Board.Layer as Layer
-import ChildUpdate exposing (updateOne)
+import Json.Encode as J
+import Json.Decode as D
+import List.Split exposing (chunksOfLeft)
 
 
 -- MODEL
@@ -31,6 +35,49 @@ initCells grid =
                     letters |> List.indexedMap (Cell.init bounds x)
                 )
             |> List.concat
+
+
+
+-- SAVE / RESTORE
+
+
+toJsonValue : Model -> J.Value
+toJsonValue model =
+    model |> toToken |> J.string
+
+
+decoder : D.Decoder Model
+decoder =
+    D.string |> D.andThen (parseWith fromToken)
+
+
+toToken : Model -> String
+toToken =
+    .layer >> Layer.toToken
+
+
+fromToken : String -> Result String Model
+fromToken token =
+    let
+        n =
+            token |> String.length
+
+        s =
+            n |> toFloat |> sqrt |> round
+    in
+        if s * s == n then
+            Ok
+                (token
+                    |> String.toList
+                    |> chunksOfLeft s
+                    |> reset
+                )
+        else
+            Err ("Invalid token: " ++ token)
+
+
+
+-- QUERY
 
 
 findCells : Model -> String -> List Cell.Model

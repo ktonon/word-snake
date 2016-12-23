@@ -29,6 +29,25 @@ new engConfig word bonus =
     )
 
 
+validate : Eng.Config -> (String -> Bonus) -> Word -> ( Word, Cmd Msg )
+validate engConfig bonusFinder word =
+    new engConfig word.word (bonusFinder word.word)
+
+
+
+-- SAVE / RESTORE
+
+
+toToken : Word -> String
+toToken word =
+    word.word
+
+
+fromToken : String -> Result String Word
+fromToken token =
+    Ok (Word token (newScore token 0) (Eng.Config "") Definition.empty)
+
+
 
 -- UPDATE
 

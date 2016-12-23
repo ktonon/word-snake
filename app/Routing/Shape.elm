@@ -1,5 +1,6 @@
 module Routing.Shape exposing (..)
 
+import Json.Decode as D
 import UrlParser exposing (Parser, oneOf, s)
 
 
@@ -50,3 +51,23 @@ parser =
         , UrlParser.map Board4x4 (s "4x4")
         , UrlParser.map Board5x5 (s "5x5")
         ]
+
+
+decoder : D.Decoder Shape
+decoder =
+    D.string
+        |> D.andThen
+            (\w ->
+                case w of
+                    "3x3" ->
+                        D.succeed Board3x3
+
+                    "4x4" ->
+                        D.succeed Board4x4
+
+                    "5x5" ->
+                        D.succeed Board5x5
+
+                    _ ->
+                        D.fail ("bad shape: " ++ w)
+            )

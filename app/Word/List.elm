@@ -2,8 +2,12 @@ module Word.List exposing (..)
 
 import ChildUpdate
 import EnglishDictionary as Eng exposing (WordCheck)
+import Exts.Json.Decode exposing (parseWith)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Json.Encode as J
+import Json.Decode as D
+import Result.Extra
 import Word.Candidate as Candidate exposing (Status(..))
 import Word.Score as Score exposing (..)
 import Word.Word as Word exposing (..)
@@ -13,14 +17,44 @@ import Word.Word as Word exposing (..)
 
 
 type alias Model =
-    { words : List Word
-    , engConfig : Eng.Config
+    { engConfig : Eng.Config
+    , words : List Word
     }
 
 
 reset : String -> Model
 reset apiEndpoint =
-    Model [] (Eng.Config apiEndpoint)
+    Model (Eng.Config apiEndpoint) []
+
+
+
+-- SAVE / RESTORE
+
+
+toJsonValue : Model -> J.Value
+toJsonValue model =
+    model |> toToken |> J.string
+
+
+decoder : D.Decoder Model
+decoder =
+    D.string |> D.andThen (parseWith fromToken)
+
+
+toToken : Model -> String
+toToken model =
+    model.words
+        |> List.map Word.toToken
+        |> String.join ","
+
+
+fromToken : String -> Result String Model
+fromToken token =
+    token
+        |> String.split ","
+        |> List.map Word.fromToken
+        |> Result.Extra.combine
+        |> Result.map (Eng.Config "" |> Model)
 
 
 
@@ -100,6 +134,26 @@ addWord model text bonus =
     in
         ( { model | words = List.sortWith Word.order (word :: model.words) }
         , Cmd.map (WordMsg text) wordCmd
+        )
+
+
+validate : String -> (String -> Bonus) -> Model -> ( Model, Cmd Msg )
+validate apiEndpoint bonusFinder model =
+    let
+        engConfig =
+            Eng.Config apiEndpoint
+
+        ( newWords, cmds ) =
+            model.words
+                |> List.map (Word.validate engConfig bonusFinder)
+                |> List.map (\( w, c ) -> ( w, Cmd.map (WordMsg w.word) c ))
+                |> List.unzip
+    in
+        ( { model
+            | engConfig = engConfig
+            , words = newWords
+          }
+        , Cmd.batch cmds
         )
 
 
