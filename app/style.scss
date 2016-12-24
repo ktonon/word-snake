@@ -6,6 +6,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.rel {
+  position: relative;
+}
+
 .shuffle {
   color: #666;
   cursor: pointer;
@@ -19,7 +23,7 @@ body {
   }
 }
 
-.word-input {
+.word-input, .share {
   font-size: 70px;
   text-align: left;
   .box {
@@ -29,7 +33,24 @@ body {
   .bonus {
   }
   .timer {
-    color: black;
+    color: #ccc;
+    &.playing {
+      color: black;
+    }
+  }
+}
+
+.share {
+  .box {
+    border-color: white;
+    font-size: 24px;
+  }
+  .fa {
+    color: #ccc;
+    font-size: 70px;
+  }
+  input {
+    font-size: 24px;
   }
 }
 

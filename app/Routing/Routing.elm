@@ -1,9 +1,11 @@
 module Routing.Routing exposing (..)
 
 import Board.Rand as Rand exposing (..)
+import Dom
 import Navigation
 import Routing.Shape as Shape exposing (..)
 import Routing.Token as Token exposing (..)
+import Task
 import UrlParser exposing (..)
 
 
@@ -32,11 +34,14 @@ playUrl shape version seed =
         |> Navigation.newUrl
 
 
-reviewUrl : Token -> Cmd msg
-reviewUrl token =
-    "#review/"
-        ++ (token |> Token.toPathComponent)
-        |> Navigation.newUrl
+reviewUrl : (Result Dom.Error () -> msg) -> Token -> Cmd msg
+reviewUrl focusHandler token =
+    Cmd.batch
+        [ "#review/"
+            ++ (token |> Token.toPathComponent)
+            |> Navigation.newUrl
+        , Task.attempt focusHandler (Dom.focus "username")
+        ]
 
 
 route : Parser (Route -> a) a

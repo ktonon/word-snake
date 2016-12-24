@@ -1,5 +1,6 @@
 module Timer exposing (..)
 
+import GameMode exposing (GameMode(..))
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Routing.Shape as Shape exposing (Shape(..))
@@ -66,19 +67,26 @@ tick timer time =
 -- VIEW
 
 
-view : Timer -> Html msg
-view timer =
-    div [ class "timer" ] [ timeRemainingText timer ]
-
-
-timeRemainingText : Timer -> Html msg
-timeRemainingText timer =
+view : GameMode -> Timer -> Html msg
+view gameMode timer =
     let
         t =
-            (timer.timeAllowed - timer.timeElapsed)
-                / 1000
-                |> round
+            case gameMode of
+                Playing ->
+                    (timer.timeAllowed - timer.timeElapsed)
+                        / 1000
+                        |> round
 
+                _ ->
+                    0
+    in
+        div [ class ("timer " ++ (gameMode |> GameMode.toString)) ]
+            [ timeRemainingText t ]
+
+
+timeRemainingText : Int -> Html msg
+timeRemainingText t =
+    let
         min =
             t // 60
 
