@@ -3,6 +3,7 @@ module Word.List exposing (..)
 import ChildUpdate
 import EnglishDictionary as Eng exposing (WordCheck)
 import Exts.Json.Decode exposing (parseWith)
+import GameMode exposing (GameMode(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Json.Encode as J
@@ -50,11 +51,14 @@ toToken model =
 
 fromToken : String -> Result String Model
 fromToken token =
-    token
-        |> String.split ","
-        |> List.map Word.fromToken
-        |> Result.Extra.combine
-        |> Result.map (Eng.Config "" |> Model)
+    if String.isEmpty token then
+        Model (Eng.Config "") [] |> Ok
+    else
+        token
+            |> String.split ","
+            |> List.map Word.fromToken
+            |> Result.Extra.combine
+            |> Result.map (Eng.Config "" |> Model)
 
 
 
@@ -161,22 +165,32 @@ validate apiEndpoint bonusFinder model =
 -- VIEW
 
 
-view : Model -> Html Msg
-view model =
+view : GameMode -> Model -> Html Msg
+view gameMode model =
     div [ class "word-list mt3 clearfix" ]
         (div []
             [ div [ class "header col col-6" ] [ text "Score" ]
             , div [ class "header total col col-5" ] [ text (totalScore model |> Basics.toString) ]
             , div [ class "col col-1" ] []
             ]
-            :: (wordsView model.words)
+            :: (wordsView gameMode model.words)
         )
 
 
-wordsView : List Word -> List (Html Msg)
-wordsView words =
+wordsView : GameMode -> List Word -> List (Html Msg)
+wordsView gameMode words =
     if List.isEmpty words then
-        [ div [ class "no-words col col-12" ] [ text "no words yet" ] ]
+        [ div [ class "no-words col col-12" ]
+            [ text
+                (case gameMode of
+                    Playing ->
+                        "no words yet"
+
+                    _ ->
+                        "no words"
+                )
+            ]
+        ]
     else
         List.map
             (\word ->

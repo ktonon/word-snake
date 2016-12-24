@@ -95,7 +95,7 @@ type Msg
     | Tick Time
     | UrlChange Navigation.Location
     | WordListMessage Word.List.Msg
-    | WindowSizeGet (Result String Window.Size)
+    | WindowSize (Result String Window.Size)
 
 
 init : Config.Model -> Navigation.Location -> ( Model, Cmd Msg )
@@ -152,12 +152,14 @@ init config location =
 
             ReviewRoute token ->
                 refreshWords model.config
-                    { model
-                        | board = token.board
-                        , shape = token.shape
-                        , wordList = token.words
-                        , gameMode = Reviewing
-                    }
+                    (updateBoardSize
+                        { model
+                            | board = token.board
+                            , shape = token.shape
+                            , wordList = token.words
+                            , gameMode = Reviewing
+                        }
+                    )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -209,22 +211,34 @@ update msg model =
         WordListMessage cMsg ->
             Word.List.updateOne WordListMessage cMsg model
 
-        WindowSizeGet result ->
+        WindowSize result ->
             case result of
                 Ok size ->
-                    let
-                        newConfig =
-                            Config.setWindowSize size model.config
-                    in
-                        ( { model
-                            | config = newConfig
-                            , board = Board.setCellWidth (cellWidth newConfig model.shape) model.board
-                          }
-                        , Cmd.none
-                        )
+                    ( if Config.sizeDidChange size model.config then
+                        updateBoardSize
+                            { model
+                                | config =
+                                    Config.setWindowSize
+                                        size
+                                        model.config
+                            }
+                      else
+                        model
+                    , Cmd.none
+                    )
 
                 _ ->
                     ( model, Cmd.none )
+
+
+updateBoardSize : Model -> Model
+updateBoardSize model =
+    { model
+        | board =
+            Board.setCellWidth
+                (cellWidth model.config model.shape)
+                model.board
+    }
 
 
 cellWidth : Config.Model -> Shape -> Int
@@ -260,7 +274,7 @@ refreshWords config model =
           }
         , Cmd.batch
             [ Cmd.map WordListMessage cmd
-            , Task.attempt WindowSizeGet Window.size
+            , Task.attempt WindowSize Window.size
             ]
         )
 
@@ -269,7 +283,7 @@ tick : Model -> Time -> ( Model, Cmd Msg )
 tick model time =
     let
         getSize =
-            Task.attempt WindowSizeGet Window.size
+            Task.attempt WindowSize Window.size
     in
         case model.gameMode of
             Playing ->
@@ -344,16 +358,16 @@ port config : (Json.Encode.Value -> msg) -> Sub msg
 subscriptions : Model -> Sub Msg
 subscriptions model =
     [ config LoadConfig
-    , Time.every Time.second Tick
     ]
         |> List.append
             (case model.gameMode of
                 Playing ->
                     [ Keyboard.downs KeyDown
+                    , Time.every Time.second Tick
                     ]
 
                 _ ->
-                    []
+                    [ Time.every (Time.second * 2) Tick ]
             )
         |> Sub.batch
 
@@ -385,7 +399,7 @@ boardView model =
         [ Shuffle.buttons Shuffle model.shape
         , headerView model
         , div [ class "clearfix" ]
-            [ div [ class "col col-3" ] [ Html.map WordListMessage (Word.List.view model.wordList) ]
+            [ div [ class "col col-3" ] [ Html.map WordListMessage (Word.List.view model.gameMode model.wordList) ]
             , div [ class "rel col col-9 mt3" ]
                 [ Html.map BoardMessage (Board.view model.board)
                 , Html.map SnakeMessage (Snake.view model.snake)

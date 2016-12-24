@@ -34,6 +34,11 @@ setWindowSize ws model =
     { model | windowSize = ws }
 
 
+sizeDidChange : Window.Size -> Model -> Bool
+sizeDidChange size model =
+    size.width /= model.windowSize.width || size.height /= model.windowSize.height
+
+
 decoder : Json.Decode.Decoder Model
 decoder =
     Json.Decode.map4 Model
