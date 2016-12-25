@@ -87,14 +87,29 @@ view score =
                     ""
     in
         div [ class ("score " ++ icon) ]
-            [ text (score |> toString) ]
+            [ score |> bonusView
+            , text (score |> toString)
+            ]
+
+
+bonusView : Score -> Html msg
+bonusView score =
+    case score.validity of
+        Valid ->
+            if score.bonus > 1 then
+                span [ class "bonus" ] [ text ((score.bonus |> Basics.toString) ++ " x ") ]
+            else
+                span [] []
+
+        _ ->
+            span [] []
 
 
 toString : Score -> String
 toString score =
     case score.validity of
         Valid ->
-            score |> toStringIfValid
+            score.base |> Basics.toString
 
         Invalid ->
             "-1"
@@ -105,9 +120,9 @@ toString score =
 
 toStringIfValid : Score -> String
 toStringIfValid score =
-    (score.base |> Basics.toString)
-        ++ (if score.bonus > 1 then
-                " x " ++ (score.bonus |> Basics.toString)
-            else
-                ""
-           )
+    (if score.bonus > 1 then
+        (score.bonus |> Basics.toString) ++ " x "
+     else
+        ""
+    )
+        ++ (score.base |> Basics.toString)

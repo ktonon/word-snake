@@ -9,6 +9,7 @@ import Html.Attributes exposing (..)
 import Json.Encode as J
 import Json.Decode as D
 import Result.Extra
+import Task
 import Word.Candidate as Candidate exposing (Status(..))
 import Word.Score as Score exposing (..)
 import Word.Word as Word exposing (..)
@@ -80,6 +81,7 @@ updateOne =
 
 type Msg
     = WordMsg String Word.Msg
+    | ShowWordPath String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -99,7 +101,7 @@ update msg model =
                                             Word.hideDefinition other
                                     )
                       }
-                    , Cmd.none
+                    , Task.perform ShowWordPath (Task.succeed exceptWord.word)
                     )
 
                 _ ->
@@ -112,6 +114,9 @@ update msg model =
                         word
                         wordMsg
                         model
+
+        _ ->
+            ( model, Cmd.none )
 
 
 candidateStatus : Model -> String -> Candidate.Status

@@ -87,9 +87,11 @@ body {
 
 .word {
   &.valid {
-    color: #060;
-    text-shadow: 0 0 2px #6f6;
+    color: #036;
     .text { cursor: pointer; }
+    .bonus {
+      color: #369;
+    }
   }
   &.invalid { color: #600; text-shadow: 0 0 2px #f66; }
   &.unknown { color: #999; }

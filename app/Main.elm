@@ -217,7 +217,21 @@ update msg model =
             init model.config location
 
         WordListMessage cMsg ->
-            Word.List.updateOne WordListMessage cMsg model
+            case cMsg of
+                Word.List.ShowWordPath word ->
+                    case model.gameMode of
+                        Reviewing ->
+                            ( { model
+                                | snake = Snake.findSnake model.board.layer word
+                              }
+                            , Cmd.none
+                            )
+
+                        _ ->
+                            ( model, Cmd.none )
+
+                _ ->
+                    Word.List.updateOne WordListMessage cMsg model
 
         WindowSize result ->
             case result of
