@@ -40,24 +40,34 @@ body {
   }
 }
 
+.word-candidate {
+  &.status-too-short, &.status-duplicate { color: #ccc; }
+  &.status-empty {
+    color: #f8f8f8;
+    &.waiting {
+      color: #666;
+    }
+  }
+  &.status-good { color: #369; }
+}
+
 .share {
   .box {
     border-color: white;
     font-size: 24px;
   }
-  .fa {
+  .chevron {
     color: #ccc;
     font-size: 70px;
+  }
+  .coming-soon {
+    .fa {
+      margin: 0 5px;
+    }
   }
   input {
     font-size: 24px;
   }
-}
-
-.word-candidate {
-  &.status-too-short, &.status-duplicate { color: #ccc; }
-  &.status-empty { color: #f8f8f8; }
-  &.status-good { color: #369; }
 }
 
 .word-list {

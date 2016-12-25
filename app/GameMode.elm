@@ -5,6 +5,7 @@ module GameMode exposing (..)
 
 type GameMode
     = Loading
+    | Waiting
     | Playing
     | Reviewing
     | Comparing
@@ -15,6 +16,9 @@ toString gameMode =
     case gameMode of
         Loading ->
             "loading"
+
+        Waiting ->
+            "waiting"
 
         Playing ->
             "playing"

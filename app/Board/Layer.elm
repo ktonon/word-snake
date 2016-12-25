@@ -146,7 +146,8 @@ reIndex layers =
 
 
 type DisplayType
-    = ShowLetters
+    = HideLetters
+    | ShowLetters
     | ShowPath
 
 
@@ -164,6 +165,9 @@ cellView dtype ( index, cell ) =
     let
         cellType =
             case dtype of
+                HideLetters ->
+                    Cell.HideLetter
+
                 ShowLetters ->
                     Cell.ShowLetter
 

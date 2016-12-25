@@ -139,7 +139,7 @@ init config location =
                 in
                     ( { model
                         | shape = shape
-                        , gameMode = Playing
+                        , gameMode = Waiting
                         , timer = Timer.reset shape
                         , board = Board.reset (cellWidth config shape) matrix
                       }
@@ -175,7 +175,15 @@ update msg model =
             ( model, Routing.playUrl shape version seed )
 
         KeyDown keyCode ->
-            keyActionUpdate (actionFromCode keyCode) model
+            case model.gameMode of
+                Waiting ->
+                    ( { model | gameMode = Playing }, Cmd.none )
+
+                Playing ->
+                    keyActionUpdate (actionFromCode keyCode) model
+
+                _ ->
+                    ( model, Cmd.none )
 
         LoadConfig data ->
             let
@@ -358,16 +366,19 @@ port config : (Json.Encode.Value -> msg) -> Sub msg
 subscriptions : Model -> Sub Msg
 subscriptions model =
     [ config LoadConfig
+    , Time.every Time.second Tick
     ]
         |> List.append
             (case model.gameMode of
+                Waiting ->
+                    [ Keyboard.ups KeyDown ]
+
                 Playing ->
                     [ Keyboard.downs KeyDown
-                    , Time.every Time.second Tick
                     ]
 
                 _ ->
-                    [ Time.every (Time.second * 2) Tick ]
+                    []
             )
         |> Sub.batch
 
@@ -382,14 +393,11 @@ view model =
         Loading ->
             h1 [ class "m4" ] [ text "Loading..." ]
 
-        Playing ->
-            boardView model
-
-        Reviewing ->
-            boardView model
-
         Comparing ->
             h1 [ class "m4" ] [ text "Comparing..." ]
+
+        _ ->
+            boardView model
 
 
 boardView : Model -> Html Msg
@@ -401,7 +409,7 @@ boardView model =
         , div [ class "clearfix" ]
             [ div [ class "col col-3" ] [ Html.map WordListMessage (Word.List.view model.gameMode model.wordList) ]
             , div [ class "rel col col-9 mt3" ]
-                [ Html.map BoardMessage (Board.view model.board)
+                [ Html.map BoardMessage (Board.view model.gameMode model.board)
                 , Html.map SnakeMessage (Snake.view model.snake)
                 ]
             ]
@@ -411,15 +419,17 @@ boardView model =
 
 headerView : Model -> Html Msg
 headerView model =
-    case model.gameMode of
-        Playing ->
-            Word.Input.view model.snake.word
-                (Snake.bonus model.snake |> Score.newScore model.snake.word)
-                (Word.List.candidateStatus model.wordList model.snake.word)
-                (Timer.view model.gameMode model.timer)
+    let
+        timerView =
+            Timer.view model.gameMode model.timer
+    in
+        case model.gameMode of
+            Reviewing ->
+                Html.map ShareMsg (Share.view model.share timerView)
 
-        Reviewing ->
-            Html.map ShareMsg (Share.view model.share (Timer.view model.gameMode model.timer))
-
-        _ ->
-            span [] []
+            _ ->
+                Word.Input.view model.gameMode
+                    model.snake.word
+                    (Snake.bonus model.snake |> Score.newScore model.snake.word)
+                    (Word.List.candidateStatus model.wordList model.snake.word)
+                    timerView

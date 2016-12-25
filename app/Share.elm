@@ -3,7 +3,6 @@ module Share exposing (..)
 import ChildUpdate
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
 
 
 -- MODEL
@@ -62,11 +61,13 @@ view share timer =
                     , input [ id "username", type_ "text" ] []
                     ]
                 , div [ class "col col-2" ]
-                    [ div [ class "fa fa-chevron-right" ] []
+                    [ div [ class "chevron fa fa-chevron-right" ] []
                     ]
                 , div [ class "col col-5" ]
                     [ div [] [ text "Challenge a friend" ]
-                    , div [ class "gray" ] [ text "Coming soon..." ]
+                    , div [ class "gray coming-soon" ]
+                        [ text "Coming soon..."
+                        ]
                     ]
                 ]
             ]

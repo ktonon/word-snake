@@ -72,13 +72,16 @@ view gameMode timer =
     let
         t =
             case gameMode of
-                Playing ->
+                Reviewing ->
+                    0
+
+                Comparing ->
+                    0
+
+                _ ->
                     (timer.timeAllowed - timer.timeElapsed)
                         / 1000
                         |> round
-
-                _ ->
-                    0
     in
         div [ class ("timer " ++ (gameMode |> GameMode.toString)) ]
             [ timeRemainingText t ]

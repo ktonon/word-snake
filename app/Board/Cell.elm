@@ -115,18 +115,28 @@ isAdjacent cell maybeOther =
 
 
 type DisplayType
-    = ShowLetter
+    = HideLetter
+    | ShowLetter
     | HighlightHead
     | HighlightTail
 
 
 view : DisplayType -> Model -> Html Msg
 view dtype cell =
-    button
-        [ class ("btn")
-        , style (List.append (commonStyle cell) (customStyle dtype cell))
-        ]
-        [ text cell.letter ]
+    let
+        ( letter, icon ) =
+            case dtype of
+                HideLetter ->
+                    ( "", " fa fa-question-circle" )
+
+                _ ->
+                    ( cell.letter, "" )
+    in
+        button
+            [ class ("btn" ++ icon)
+            , style (List.append (commonStyle cell) (customStyle dtype cell))
+            ]
+            [ text letter ]
 
 
 commonStyle : Model -> List ( String, String )
@@ -146,6 +156,9 @@ commonStyle cell =
 customStyle : DisplayType -> Model -> List ( String, String )
 customStyle dtype cell =
     case dtype of
+        HideLetter ->
+            [ ( "color", "#d0e0f0" ) ]
+
         ShowLetter ->
             [ ( "color", "#036" ) ]
 

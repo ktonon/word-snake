@@ -2,9 +2,10 @@ module Board.Board exposing (..)
 
 import ChildUpdate exposing (updateOne)
 import Exts.Json.Decode exposing (parseWith)
+import GameMode exposing (GameMode(..))
 import Html exposing (..)
 import Board.Cell as Cell
-import Board.Layer as Layer
+import Board.Layer as Layer exposing (DisplayType(..))
 import Json.Encode as J
 import Json.Decode as D
 import List.Split exposing (chunksOfLeft)
@@ -131,6 +132,15 @@ update msg board =
 -- VIEW
 
 
-view : Model -> Html Msg
-view board =
-    div [] [ Html.map LayerMessage (Layer.view Layer.ShowLetters board.layer) ]
+view : GameMode -> Model -> Html Msg
+view gameMode board =
+    let
+        displayType =
+            case gameMode of
+                Waiting ->
+                    HideLetters
+
+                _ ->
+                    ShowLetters
+    in
+        div [] [ Html.map LayerMessage (Layer.view displayType board.layer) ]
