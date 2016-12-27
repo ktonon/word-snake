@@ -14,7 +14,7 @@ import Json.Encode
 import KeyAction exposing (..)
 import Keyboard exposing (KeyCode)
 import Navigation
-import Random.Pcg as Random
+import Random as Random
 import Routing.Routing as Routing exposing (Route(..))
 import Routing.Shape as Shape exposing (Shape(..))
 import Routing.Token as Token exposing (..)
@@ -69,7 +69,7 @@ reset config =
     Model
         config
         ""
-        (Board.reset (cellWidth config Shape.default) [])
+        (Board.reset Shape.default (cellWidth config Shape.default) [])
         Loading
         (Random.initialSeed 0)
         Shape.default
@@ -86,7 +86,7 @@ reset config =
 type Msg
     = BoardMessage Board.Msg
     | FocusResult (Result Dom.Error ())
-    | GotoBoard Shape GeneratorVersion Seed
+    | GotoBoard Shape Seed
     | KeyDown KeyCode
     | LoadConfig Json.Encode.Value
     | ShareMsg Share.Msg
@@ -109,29 +109,30 @@ init config location =
     in
         case route of
             NotFoundRoute ->
-                ( { model
-                    | shape = Board4x4
-                    , gameMode = Playing
-                    , timer = Timer.reset Board4x4
-                    , board =
-                        Board.reset (cellWidth config Board4x4)
-                            [ [ '4', 'N', 'F', 'O' ]
-                            , [ '0', 'O', 'P', 'U' ]
-                            , [ '4', 'T', 'A', 'N' ]
-                            , [ 'E', 'G', 'B', 'D' ]
-                            ]
-                  }
-                , Cmd.none
-                )
+                let
+                    s =
+                        Shape 4 4
+                in
+                    ( { model
+                        | shape = s
+                        , gameMode = Playing
+                        , timer = Timer.reset s
+                        , board =
+                            Board.reset s
+                                (cellWidth config s)
+                                ("4NFO0PU4TANEGBD" |> String.toList)
+                      }
+                    , Cmd.none
+                    )
 
             RandomPlayRoute shape ->
                 let
                     gen =
                         Random.int 0 1000000000000
                 in
-                    ( model, Random.generate (GotoBoard shape 1) gen )
+                    ( model, Random.generate (GotoBoard shape) gen )
 
-            PlayRoute shape version seedValue ->
+            PlayRoute shape seedValue ->
                 let
                     ( matrix, newSeed ) =
                         Random.initialSeed seedValue
@@ -141,7 +142,7 @@ init config location =
                         | shape = shape
                         , gameMode = Waiting
                         , timer = Timer.reset shape
-                        , board = Board.reset (cellWidth config shape) matrix
+                        , board = Board.reset shape (cellWidth config shape) matrix
                       }
                     , [ Task.attempt FocusResult (Dom.blur "shuffle")
                       , Task.attempt FocusResult (Dom.blur "shuffle-smaller")
@@ -154,7 +155,7 @@ init config location =
                 refreshWords model.config
                     (updateBoardSize
                         { model
-                            | board = token.board
+                            | board = Board.fromToken token.shape token.board
                             , shape = token.shape
                             , wordList = token.words
                             , gameMode = Reviewing
@@ -171,8 +172,8 @@ update msg model =
         FocusResult error ->
             ( model, Cmd.none )
 
-        GotoBoard shape version seed ->
-            ( model, Routing.playUrl shape version seed )
+        GotoBoard shape seed ->
+            ( model, Routing.playUrl shape seed )
 
         KeyDown keyCode ->
             case model.gameMode of
@@ -266,8 +267,11 @@ updateBoardSize model =
 cellWidth : Config.Model -> Shape -> Int
 cellWidth conf shape =
     let
-        n =
-            Shape.toInt shape
+        w =
+            Shape.toWidth shape
+
+        h =
+            Shape.toHeight shape
 
         s =
             conf.windowSize
@@ -278,7 +282,7 @@ cellWidth conf shape =
         y =
             s.height - 200
     in
-        (min x y) // n
+        (min (x // w) (y // h))
 
 
 refreshWords : Config.Model -> Model -> ( Model, Cmd Msg )
@@ -319,7 +323,7 @@ tick model time =
                             , gameMode = Reviewing
                           }
                         , Token
-                            model.board
+                            (model.board |> Board.toToken)
                             model.shape
                             model.wordList
                             |> Routing.reviewUrl FocusResult

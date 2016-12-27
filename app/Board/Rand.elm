@@ -1,17 +1,13 @@
 module Board.Rand
     exposing
         ( board
-        , GeneratorVersion
         , Seed
         )
 
 import Config.Lang as Lang exposing (..)
-import Random.Pcg exposing (..)
+import Random.Extra exposing (combine, constant, frequency)
+import Random exposing (..)
 import Routing.Shape as Shape exposing (..)
-
-
-type alias GeneratorVersion =
-    Int
 
 
 type alias Seed =
@@ -22,69 +18,23 @@ type alias Seed =
 -- GENERATOR
 
 
-board : Lang -> Shape -> Generator (List (List Char))
+board : Lang -> Shape -> Generator (List Char)
 board lang =
     case lang of
         English ->
             boardWithSize englishLetter
 
 
-boardWithSize : Generator Char -> Shape -> Generator (List (List Char))
+boardWithSize : Generator Char -> Shape -> Generator (List Char)
 boardWithSize genChar size =
     case size of
-        Board3x3 ->
-            board3x3 genChar
-
-        Board4x4 ->
-            board4x4 genChar
-
-        Board5x5 ->
-            board5x5 genChar
-
-
-board3x3 : Generator Char -> Generator (List (List Char))
-board3x3 genChar =
-    map3 three (column3 genChar) (column3 genChar) (column3 genChar)
-
-
-board4x4 : Generator Char -> Generator (List (List Char))
-board4x4 genChar =
-    map4 four (column4 genChar) (column4 genChar) (column4 genChar) (column4 genChar)
-
-
-board5x5 : Generator Char -> Generator (List (List Char))
-board5x5 genChar =
-    map5 five (column5 genChar) (column5 genChar) (column5 genChar) (column5 genChar) (column5 genChar)
-
-
-column3 : Generator Char -> Generator (List Char)
-column3 genChar =
-    map3 three genChar genChar genChar
-
-
-column4 : Generator Char -> Generator (List Char)
-column4 genChar =
-    map4 four genChar genChar genChar genChar
-
-
-column5 : Generator Char -> Generator (List Char)
-column5 genChar =
-    map5 five genChar genChar genChar genChar genChar
-
-
-three : a -> a -> a -> List a
-three a b c =
-    [ a, b, c ]
-
-
-four : a -> a -> a -> a -> List a
-four a b c d =
-    [ a, b, c, d ]
-
-
-five : a -> a -> a -> a -> a -> List a
-five a b c d e =
-    [ a, b, c, d, e ]
+        Shape x y ->
+            if x >= 0 && y >= 0 then
+                List.range 1 (x * y)
+                    |> List.foldl (\_ list -> genChar :: list) []
+                    |> combine
+            else
+                constant []
 
 
 englishLetter : Generator Char

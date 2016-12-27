@@ -1,56 +1,79 @@
 module Routing.Shape exposing (..)
 
 import Json.Decode as D
-import UrlParser exposing (Parser, oneOf, s)
+import List.Extra exposing (getAt)
+import Regex exposing (regex, HowMany(..))
+import Toolkit.Helpers exposing (maybe2Tuple)
+import UrlParser exposing (..)
 
 
 -- MODEL
 
 
+type Route
+    = BlogList (Maybe String) (Maybe String)
+    | BlogPost Int
+
+
+route : Parser (Route -> a) a
+route =
+    oneOf
+        [ map BlogList (s "blog" <?> stringParam "search" <?> stringParam "page")
+        , map BlogPost (s "blog" </> int)
+        ]
+
+
 type Shape
-    = Board3x3
-    | Board4x4
-    | Board5x5
+    = Shape Int Int
+
+
+smallest : Int
+smallest =
+    3
+
+
+largest : Int
+largest =
+    9
 
 
 default : Shape
 default =
-    Board4x4
+    Shape 5 5
 
 
-toInt : Shape -> Int
-toInt shape =
+toWidth : Shape -> Int
+toWidth shape =
     case shape of
-        Board3x3 ->
-            3
+        Shape width _ ->
+            width
 
-        Board4x4 ->
-            4
 
-        Board5x5 ->
-            5
+toHeight : Shape -> Int
+toHeight shape =
+    case shape of
+        Shape _ height ->
+            height
 
 
 toPathComponent : Shape -> String
 toPathComponent shape =
     case shape of
-        Board3x3 ->
-            "3x3"
-
-        Board4x4 ->
-            "4x4"
-
-        Board5x5 ->
-            "5x5"
+        Shape x y ->
+            (x |> toString) ++ "x" ++ (y |> toString)
 
 
 parser : Parser (Shape -> a) a
 parser =
-    oneOf
-        [ UrlParser.map Board3x3 (s "3x3")
-        , UrlParser.map Board4x4 (s "4x4")
-        , UrlParser.map Board5x5 (s "5x5")
-        ]
+    UrlParser.custom "SHAPE"
+        (\segment ->
+            case parseInt2Tuple segment of
+                Just ( x, y ) ->
+                    Ok (Shape x y)
+
+                Nothing ->
+                    Err ("Bad shape: " ++ segment)
+        )
 
 
 decoder : D.Decoder Shape
@@ -58,16 +81,28 @@ decoder =
     D.string
         |> D.andThen
             (\w ->
-                case w of
-                    "3x3" ->
-                        D.succeed Board3x3
+                case parseInt2Tuple w of
+                    Just ( x, y ) ->
+                        D.succeed (Shape x y)
 
-                    "4x4" ->
-                        D.succeed Board4x4
+                    Nothing ->
+                        D.fail ("Bad shape: " ++ w)
+            )
 
-                    "5x5" ->
-                        D.succeed Board5x5
 
-                    _ ->
-                        D.fail ("bad shape: " ++ w)
+parseInt2Tuple : String -> Maybe ( Int, Int )
+parseInt2Tuple w =
+    w
+        |> Regex.find (AtMost 1) (regex "^(\\d+)x(\\d+)$")
+        |> List.head
+        |> Maybe.andThen
+            (\m ->
+                ( m.submatches
+                    |> List.head
+                    |> Maybe.andThen (\x -> x |> Maybe.andThen (String.toInt >> Result.toMaybe))
+                , m.submatches
+                    |> getAt 1
+                    |> Maybe.andThen (\x -> x |> Maybe.andThen (String.toInt >> Result.toMaybe))
+                )
+                    |> maybe2Tuple
             )

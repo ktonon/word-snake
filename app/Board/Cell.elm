@@ -3,6 +3,7 @@ module Board.Cell exposing (..)
 import ChildUpdate
 import Html exposing (..)
 import Html.Attributes exposing (class, style)
+import Routing.Shape exposing (Shape(..))
 
 
 -- MODEL
@@ -22,10 +23,6 @@ type alias Id =
     String
 
 
-type alias Bounds =
-    ( Int, Int )
-
-
 type alias Pos =
     ( Int, Int )
 
@@ -40,18 +37,18 @@ makeId ( x, y ) =
     (toString x) ++ "_" ++ (toString y)
 
 
-init : Int -> Bounds -> Int -> Int -> Char -> Model
-init width bounds x y letter =
+init : Int -> Shape -> Int -> Int -> Char -> Model
+init width shape x y letter =
     let
         pos =
             ( x, y )
     in
-        findNeighbours bounds pos
+        findNeighbours shape pos
             |> Model (makeId pos) (String.fromChar letter) x y width
 
 
-findNeighbours : Bounds -> Pos -> List Id
-findNeighbours bounds ( x, y ) =
+findNeighbours : Shape -> Pos -> List Id
+findNeighbours shape ( x, y ) =
     [ ( x - 1, y - 1 )
     , ( x - 1, y )
     , ( x - 1, y + 1 )
@@ -61,15 +58,17 @@ findNeighbours bounds ( x, y ) =
     , ( x + 1, y )
     , ( x + 1, y + 1 )
     ]
-        |> List.filterMap (inBoundId bounds)
+        |> List.filterMap (inBoundId shape)
 
 
-inBoundId : Bounds -> Pos -> Maybe Id
-inBoundId ( min, max ) ( x, y ) =
-    if x < min || x > max || y < min || y > max then
-        Nothing
-    else
-        makeId ( x, y ) |> Just
+inBoundId : Shape -> Pos -> Maybe Id
+inBoundId shape ( x, y ) =
+    case shape of
+        Shape xMax yMax ->
+            if x < 0 || x > xMax || y < 0 || y > yMax then
+                Nothing
+            else
+                makeId ( x, y ) |> Just
 
 
 

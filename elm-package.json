@@ -8,7 +8,10 @@
     ],
     "exposed-modules": [],
     "dependencies": {
+        "danielnarey/elm-toolkit": "4.4.0 <= v < 5.0.0",
+        "elm-community/list-extra": "5.0.0 <= v < 6.0.0",
         "elm-community/list-split": "1.0.2 <= v < 2.0.0",
+        "elm-community/random-extra": "2.0.0 <= v < 3.0.0",
         "elm-community/result-extra": "2.0.1 <= v < 3.0.0",
         "elm-lang/core": "5.0.0 <= v < 6.0.0",
         "elm-lang/dom": "1.1.1 <= v < 2.0.0",
@@ -21,7 +24,6 @@
         "krisajenkins/elm-exts": "26.3.0 <= v < 27.0.0",
         "ktonon/elm-child-update": "1.0.2 <= v < 2.0.0",
         "ktonon/elm-english-dictionary": "2.0.1 <= v < 3.0.0",
-        "mgold/elm-random-pcg": "4.0.2 <= v < 5.0.0",
         "truqu/elm-base64": "1.0.5 <= v < 2.0.0"
     },
     "elm-version": "0.18.0 <= v < 0.19.0"

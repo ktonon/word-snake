@@ -1,14 +1,12 @@
 module Board.Board exposing (..)
 
 import ChildUpdate exposing (updateOne)
-import Exts.Json.Decode exposing (parseWith)
 import GameMode exposing (GameMode(..))
 import Html exposing (..)
 import Board.Cell as Cell
 import Board.Layer as Layer exposing (DisplayType(..))
-import Json.Encode as J
-import Json.Decode as D
 import List.Split exposing (chunksOfLeft)
+import Routing.Shape exposing (Shape(..))
 
 
 -- MODEL
@@ -24,27 +22,29 @@ defaultCellWidth =
     150
 
 
-reset : Int -> List (List Char) -> Model
-reset cellWidth grid =
+reset : Shape -> Int -> List Char -> Model
+reset shape cellWidth grid =
     let
         columns =
             List.length grid
     in
-        grid |> initCells cellWidth |> Layer.Model 0 |> Model
+        case shape of
+            Shape _ y ->
+                grid
+                    |> chunksOfLeft y
+                    |> initCells cellWidth shape
+                    |> Layer.Model 0
+                    |> Model
 
 
-initCells : Int -> List (List Char) -> List Cell.Model
-initCells cellWidth grid =
-    let
-        bounds =
-            ( 0, List.length grid - 1 )
-    in
-        grid
-            |> List.indexedMap
-                (\x letters ->
-                    letters |> List.indexedMap (Cell.init cellWidth bounds x)
-                )
-            |> List.concat
+initCells : Int -> Shape -> List (List Char) -> List Cell.Model
+initCells cellWidth shape grid =
+    grid
+        |> List.indexedMap
+            (\x letters ->
+                letters |> List.indexedMap (Cell.init cellWidth shape x)
+            )
+        |> List.concat
 
 
 setCellWidth : Int -> Model -> Model
@@ -56,39 +56,16 @@ setCellWidth w model =
 -- SAVE / RESTORE
 
 
-toJsonValue : Model -> J.Value
-toJsonValue model =
-    model |> toToken |> J.string
-
-
-decoder : D.Decoder Model
-decoder =
-    D.string |> D.andThen (parseWith fromToken)
-
-
 toToken : Model -> String
 toToken =
     .layer >> Layer.toToken
 
 
-fromToken : String -> Result String Model
-fromToken token =
-    let
-        n =
-            token |> String.length
-
-        s =
-            n |> toFloat |> sqrt |> round
-    in
-        if s * s == n then
-            Ok
-                (token
-                    |> String.toList
-                    |> chunksOfLeft s
-                    |> reset defaultCellWidth
-                )
-        else
-            Err ("Invalid token: " ++ token)
+fromToken : Shape -> String -> Model
+fromToken shape token =
+    token
+        |> String.toList
+        |> reset shape defaultCellWidth
 
 
 

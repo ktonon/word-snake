@@ -1,7 +1,6 @@
 module Routing.Token exposing (..)
 
 import Base64
-import Board.Board as Board
 import Json.Encode as J
 import Json.Decode as D exposing (at)
 import Result
@@ -14,7 +13,7 @@ import Word.List
 
 
 type alias Token =
-    { board : Board.Model
+    { board : String
     , shape : Shape
     , words : Word.List.Model
     }
@@ -24,7 +23,7 @@ toPathComponent : Token -> String
 toPathComponent token =
     case
         J.object
-            [ ( "b", Board.toJsonValue token.board )
+            [ ( "b", J.string token.board )
             , ( "s", J.string (token.shape |> Shape.toPathComponent) )
             , ( "w", Word.List.toJsonValue token.words )
             ]
@@ -41,7 +40,7 @@ toPathComponent token =
 decoder : D.Decoder Token
 decoder =
     D.map3 Token
-        (at [ "b" ] Board.decoder)
+        (at [ "b" ] D.string)
         (at [ "s" ] Shape.decoder)
         (at [ "w" ] Word.List.decoder)
 

@@ -19,19 +19,25 @@ type alias Timer =
 
 reset : Shape -> Timer
 reset shape =
-    Timer
-        0
-        0
-        (case shape of
-            Board3x3 ->
-                Time.second * 45
+    let
+        cxn =
+            \x y -> x * y
 
-            Board4x4 ->
-                Time.minute * 3
+        cxn4 =
+            16.0
 
-            Board5x5 ->
-                Time.minute * 5
-        )
+        time4 =
+            3.0 * 60.0
+
+        raw =
+            case shape of
+                Shape x y ->
+                    (time4 * (cxn x y |> toFloat) / cxn4)
+    in
+        Timer
+            0
+            0
+            (Time.second * (raw / 15 |> round |> toFloat) * 15)
 
 
 zero : Timer

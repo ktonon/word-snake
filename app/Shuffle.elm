@@ -3,7 +3,7 @@ module Shuffle exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (alt, class, href, id, src, style)
 import Html.Events exposing (onClick)
-import Routing.Shape exposing (Shape(..))
+import Routing.Shape as Shape exposing (Shape(..))
 
 
 -- MODEL
@@ -17,21 +17,22 @@ type SizeChange
 
 changeShape : Shape -> SizeChange -> Shape
 changeShape shape sizeChange =
-    case ( shape, sizeChange ) of
-        ( Board3x3, Bigger ) ->
-            Board4x4
+    let
+        s =
+            Shape.smallest
 
-        ( Board4x4, Smaller ) ->
-            Board3x3
+        l =
+            Shape.largest
+    in
+        case ( shape, sizeChange ) of
+            ( Shape x y, Bigger ) ->
+                Shape (min (x + 1) l) (min (y + 1) l)
 
-        ( Board4x4, Bigger ) ->
-            Board5x5
+            ( Shape x y, Smaller ) ->
+                Shape (max (x - 1) s) (max (y - 1) s)
 
-        ( Board5x5, Smaller ) ->
-            Board4x4
-
-        ( board, _ ) ->
-            board
+            ( shape, _ ) ->
+                shape
 
 
 
@@ -43,14 +44,13 @@ buttons mapMsg shape =
     let
         ( showSmaller, showBigger ) =
             case shape of
-                Board3x3 ->
-                    ( False, True )
-
-                Board5x5 ->
-                    ( True, False )
-
-                _ ->
-                    ( True, True )
+                Shape x y ->
+                    if x == Shape.smallest && y == Shape.smallest then
+                        ( False, True )
+                    else if x == Shape.largest && y == Shape.largest then
+                        ( True, False )
+                    else
+                        ( True, True )
     in
         div [ class "center py2" ]
             [ button mapMsg "shuffle-smaller" "" "fa fa-th-large" Smaller showSmaller

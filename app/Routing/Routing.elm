@@ -12,7 +12,7 @@ import UrlParser exposing (..)
 type Route
     = NotFoundRoute
     | RandomPlayRoute Shape
-    | PlayRoute Shape GeneratorVersion Seed
+    | PlayRoute Shape Seed
     | ReviewRoute Token
 
 
@@ -23,12 +23,10 @@ randomPlayUrl shape =
         |> Navigation.newUrl
 
 
-playUrl : Shape -> GeneratorVersion -> Seed -> Cmd msg
-playUrl shape version seed =
+playUrl : Shape -> Seed -> Cmd msg
+playUrl shape seed =
     "#play/"
         ++ (Shape.toPathComponent shape)
-        ++ "/"
-        ++ (toString version)
         ++ "/"
         ++ (toString seed)
         |> Navigation.newUrl
@@ -47,7 +45,7 @@ reviewUrl focusHandler token =
 route : Parser (Route -> a) a
 route =
     oneOf
-        [ map PlayRoute (s "play" </> Shape.parser </> int </> int)
+        [ map PlayRoute (s "play" </> Shape.parser </> int)
         , map RandomPlayRoute (s "play" </> Shape.parser)
         , map (RandomPlayRoute Shape.default) (s "play")
         , map (RandomPlayRoute Shape.default) UrlParser.top
