@@ -276,6 +276,7 @@ updateBoardSize model =
         | board =
             Board.setCellWidth
                 (cellWidth model.config model.shape)
+                model.shape
                 model.board
     }
 
@@ -293,10 +294,16 @@ cellWidth conf shape =
             conf.windowSize
 
         x =
-            (s.width |> toFloat) * 0.7 |> round
+            if conf.isMobile then
+                (s.width |> toFloat) * 0.9 |> round
+            else
+                (s.width |> toFloat) * 0.7 |> round
 
         y =
-            s.height - 200
+            if conf.isMobile then
+                s.height - 100
+            else
+                s.height - 200
     in
         (min (x // w) (y // h))
 
@@ -442,45 +449,77 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    case model.gameMode of
-        Loading ->
-            h1 [ class "m4" ] [ text "Loading..." ]
+    div
+        [ class
+            (if model.config.isMobile then
+                "mobile"
+             else
+                ""
+            )
+        ]
+        [ case model.gameMode of
+            Loading ->
+                h1 [ class "m4" ] [ text "Loading..." ]
 
-        Comparing ->
-            h1 [ class "m4" ] [ text "Comparing..." ]
+            Comparing ->
+                h1 [ class "m4" ] [ text "Comparing..." ]
 
-        _ ->
-            boardView model
+            _ ->
+                boardView model
+        ]
 
 
 boardView : Model -> Html Msg
 boardView model =
-    div
-        [ class "px2" ]
-        [ Shuffle.buttons Shuffle model.shape
-        , headerView model
-        , div [ class "clearfix" ]
-            [ div [ class "col col-3" ] [ Html.map WordListMessage (Word.List.view model.gameMode model.wordList) ]
-            , div [ class "rel col col-9 mt3" ]
-                [ Html.map BoardMessage (Board.view model.gameMode model.board)
-                , Html.map SnakeMessage (Snake.view model.snake)
-                ]
-            ]
-        , Util.forkMe model.config
-        ]
-
-
-headerView : Model -> Html Msg
-headerView model =
     let
-        timerView =
-            Timer.view model.gameMode model.timer
-    in
-        case model.gameMode of
-            Reviewing ->
-                Html.map ShareMsg (Share.view model.share timerView)
+        board =
+            [ Html.map BoardMessage (Board.view model.gameMode model.board)
+            , Html.map SnakeMessage (Snake.view model.snake)
+            ]
 
-            _ ->
+        shuffle =
+            Shuffle.buttons Shuffle model.shape
+
+        timer =
+            Timer.view model.gameMode model.timer
+
+        wordList =
+            [ Html.map WordListMessage (Word.List.view model.gameMode model.wordList) ]
+    in
+        div
+            [ class "px2" ]
+            [ if model.config.isMobile then
+                div [ class "clearfix" ]
+                    [ div [ class "col col-3" ] [ timer ]
+                    , div [ class "col col-9" ] [ shuffle ]
+                    ]
+              else
+                shuffle
+            , Html.map ShareMsg (headerView model timer)
+            , div [ class "clearfix" ]
+                (if model.config.isMobile then
+                    [ div [ class "rel mt3" ] board
+                    , div [] wordList
+                    ]
+                 else
+                    [ div [ class "col col-3" ] wordList
+                    , div [ class "rel col col-9 mt3" ] board
+                    ]
+                )
+            , Util.forkMe model.config
+            ]
+
+
+headerView : Model -> Html Share.Msg -> Html Share.Msg
+headerView model timerView =
+    case model.gameMode of
+        Reviewing ->
+            Share.view model.config.isMobile model.share timerView
+
+        _ ->
+            if model.config.isMobile then
+                span [] []
+            else
                 Word.Input.view model.gameMode
                     model.snake.word
                     (Snake.bonus model.snake |> Score.newScore model.snake.word)

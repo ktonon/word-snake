@@ -52,7 +52,7 @@ buttons mapMsg shape =
                     else
                         ( True, True )
     in
-        div [ class "center py2" ]
+        div [ class "shuffle" ]
             [ button mapMsg "shuffle-smaller" "" "fa fa-th-large" Smaller showSmaller
             , button mapMsg "shuffle" "Shuffle" "" Same True
             , button mapMsg "shuffle-bigger" "" "fa fa-th" Bigger showBigger

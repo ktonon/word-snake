@@ -21,10 +21,10 @@ reset : Shape -> Timer
 reset shape =
     let
         cxn =
-            \x y -> x * y
+            \x y -> 2 * (((x + y) / 2) - 1) * ((x + y) - 1)
 
         cxn4 =
-            16.0
+            cxn 4.0 4.0
 
         time4 =
             3.0 * 60.0
@@ -32,12 +32,15 @@ reset shape =
         raw =
             case shape of
                 Shape x y ->
-                    (time4 * (cxn x y |> toFloat) / cxn4)
+                    (time4 * (cxn (x |> toFloat) (y |> toFloat)) / cxn4)
+
+        delta =
+            60
     in
         Timer
             0
             0
-            (Time.second * (raw / 15 |> round |> toFloat) * 15)
+            (Time.second * (raw / delta |> floor |> toFloat) * delta)
 
 
 zero : Timer

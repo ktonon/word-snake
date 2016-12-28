@@ -13,13 +13,49 @@ body {
 .shuffle {
   color: #666;
   cursor: pointer;
-  font-size: 18pt;
+  font-size: 2.5vh;
+  margin: 0.5em 0.2em;
+  padding: 0;
+  text-align: center;
   &:hover {
     color: #369;
   }
   &.disabled, &.disabled:hover {
     color: #ccc;
     cursor: auto;
+  }
+}
+.mobile {
+  .shuffle, .timer {
+    font-size: 4vh;
+    margin: 0.5em 0.2em;
+    padding: 0;
+  }
+  .shuffle {
+    text-align: right;
+  }
+}
+
+.word-input, .share {
+  font-size: 5vh;
+  text-align: left;
+  .box {
+    border-radius: 20px;
+    border: dashed 1px #999;
+  }
+  .bonus {
+  }
+  .timer {
+    color: #ccc;
+    &.playing {
+      color: black;
+    }
+  }
+}
+.mobile .share {
+  font-size: 4vh;
+  input {
+    margin-bottom: 0.5em;
   }
 }
 
@@ -48,23 +84,6 @@ body {
     &:hover {
       border-color: #369;
       color: #369;
-    }
-  }
-}
-
-.word-input, .share {
-  font-size: 70px;
-  text-align: left;
-  .box {
-    border-radius: 20px;
-    border: dashed 1px #999;
-  }
-  .bonus {
-  }
-  .timer {
-    color: #ccc;
-    &.playing {
-      color: black;
     }
   }
 }

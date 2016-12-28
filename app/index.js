@@ -3,8 +3,11 @@ require('font-awesome/css/font-awesome.css');
 require('./style.scss');
 require('./index.html');
 
+const nav = window.navigator; // eslint-disable-line no-undef
 const doc = document; // eslint-disable-line no-undef
-const config = require('./config.json');
+const config = Object.assign({
+  isMobile: /mobile/i.test(nav.appVersion),
+}, require('./config.json'));
 const Elm = require('./Main.elm');
 
 const font = doc.createElement('link');

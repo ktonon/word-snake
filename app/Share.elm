@@ -50,25 +50,42 @@ update msg model =
 -- VIEW
 
 
-view : Share -> Html Msg -> Html Msg
-view share timer =
+view : Bool -> Share -> Html Msg -> Html Msg
+view isMobile share timer =
     div [ class "share clearfix" ]
-        [ div [ class "col col-3" ] [ timer ]
-        , div [ class "box rounded px2 col col-9" ]
-            [ div [ class "clearfix" ]
-                [ div [ class "col col-5" ]
-                    [ div [] [ text "Enter your name" ]
-                    , input [ id "username", type_ "text" ] []
-                    ]
-                , div [ class "col col-2" ]
-                    [ div [ class "chevron fa fa-chevron-right" ] []
-                    ]
-                , div [ class "col col-5" ]
-                    [ div [] [ text "Challenge a friend" ]
-                    , div [ class "gray coming-soon" ]
-                        [ text "Coming soon..."
-                        ]
-                    ]
+        (if isMobile then
+            [ div [ class "box rounded" ] [ mobileShareView share ] ]
+         else
+            [ div [ class "col col-3" ] [ timer ]
+            , div [ class "box rounded px2 col col-9" ] [ shareView share ]
+            ]
+        )
+
+
+shareView : Share -> Html Msg
+shareView share =
+    div [ class "clearfix" ]
+        [ div [ class "col col-5" ]
+            [ div [] [ text "Enter your name" ]
+            , input [ id "username", type_ "text" ] []
+            ]
+        , div [ class "col col-2" ]
+            [ div [ class "chevron fa fa-chevron-right" ] []
+            ]
+        , div [ class "col col-5" ]
+            [ div [] [ text "Challenge a friend" ]
+            , div [ class "gray coming-soon" ]
+                [ text "Coming soon..."
                 ]
             ]
+        ]
+
+
+mobileShareView : Share -> Html Msg
+mobileShareView share =
+    div []
+        [ div [] [ text "Enter your name" ]
+        , input [ id "username", type_ "text" ] []
+        , div [] [ text "Challenge a friend" ]
+        , div [ class "gray coming-soon" ] [ text "Coming soon..." ]
         ]

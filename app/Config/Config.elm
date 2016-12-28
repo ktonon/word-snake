@@ -1,7 +1,7 @@
 module Config.Config exposing (..)
 
 import Config.Lang as Lang exposing (Lang(..))
-import Json.Decode exposing (at)
+import Json.Decode as D exposing (at)
 import Window
 
 
@@ -10,6 +10,7 @@ import Window
 
 type alias Model =
     { apiEndpoint : String
+    , isMobile : Bool
     , language : Lang
     , forkMe : Maybe String
     , windowSize : Window.Size
@@ -19,6 +20,7 @@ type alias Model =
 empty : Model
 empty =
     Model ""
+        False
         Lang.default
         Nothing
         (Window.Size 0 0)
@@ -39,10 +41,11 @@ sizeDidChange size model =
     size.width /= model.windowSize.width || size.height /= model.windowSize.height
 
 
-decoder : Json.Decode.Decoder Model
+decoder : D.Decoder Model
 decoder =
-    Json.Decode.map4 Model
-        (at [ "apiEndpoint" ] Json.Decode.string)
+    D.map5 Model
+        (at [ "apiEndpoint" ] D.string)
+        (at [ "isMobile" ] D.bool)
         (at [ "language" ] Lang.decoder)
-        (Json.Decode.maybe <| at [ "forkMe" ] Json.Decode.string)
-        (Json.Decode.succeed (Window.Size 0 0))
+        (D.maybe <| at [ "forkMe" ] D.string)
+        (D.succeed (Window.Size 0 0))

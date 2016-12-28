@@ -3,6 +3,7 @@ module Board.Board exposing (..)
 import ChildUpdate exposing (updateOne)
 import GameMode exposing (GameMode(..))
 import Html exposing (..)
+import Html.Attributes exposing (style)
 import Board.Cell as Cell
 import Board.Layer as Layer exposing (DisplayType(..))
 import List.Split exposing (chunksOfLeft)
@@ -14,7 +15,9 @@ import Task
 
 
 type alias Model =
-    { layer : Layer.Model
+    { shape : Shape
+    , cellWidth : Int
+    , layer : Layer.Model
     }
 
 
@@ -35,7 +38,7 @@ reset shape cellWidth grid =
                     |> chunksOfLeft y
                     |> initCells cellWidth shape
                     |> Layer.Model 0
-                    |> Model
+                    |> Model shape cellWidth
 
 
 initCells : Int -> Shape -> List (List Char) -> List Cell.Model
@@ -48,9 +51,13 @@ initCells cellWidth shape grid =
         |> List.concat
 
 
-setCellWidth : Int -> Model -> Model
-setCellWidth w model =
-    { model | layer = model.layer |> Layer.setCellWidth w }
+setCellWidth : Int -> Shape -> Model -> Model
+setCellWidth w shape model =
+    { model
+        | layer = model.layer |> Layer.setCellWidth w
+        , cellWidth = w
+        , shape = shape
+    }
 
 
 
@@ -122,6 +129,13 @@ update msg board =
 view : GameMode -> Model -> Html Msg
 view gameMode board =
     let
+        ( w, h ) =
+            case board.shape of
+                Shape x y ->
+                    ( x * board.cellWidth |> toString
+                    , y * board.cellWidth |> toString
+                    )
+
         displayType =
             case gameMode of
                 Waiting ->
@@ -130,4 +144,10 @@ view gameMode board =
                 _ ->
                     ShowLetters
     in
-        div [] [ Html.map LayerMessage (Layer.view displayType board.layer) ]
+        div
+            [ style
+                [ ( "width", w ++ "px" )
+                , ( "height", h ++ "px" )
+                ]
+            ]
+            [ Html.map LayerMessage (Layer.view displayType board.layer) ]
