@@ -23,6 +23,35 @@ body {
   }
 }
 
+.cell {
+  border-radius: 20px;
+  color: #036;
+  cursor: pointer;
+  margin: 5px;
+  position: absolute;
+  text-align: center;
+  &.hide-letter {
+    color: #d0e0f0;
+  }
+  &.show-letter {
+    color: #036;
+  }
+  &.highlight-tail {
+    background-color: rgba(204, 204, 204, 0.3);
+    border: dashed 1px rgba(128, 128, 128, 0.5);
+    color: #036;
+  }
+  &.highlight-head {
+    background-color: rgba(153, 204, 255, 0.4);
+    border: solid 1px #036;
+    color: #036;
+    &:hover {
+      border-color: #369;
+      color: #369;
+    }
+  }
+}
+
 .word-input, .share {
   font-size: 70px;
   text-align: left;

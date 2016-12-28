@@ -3,6 +3,7 @@ module Board.Layer exposing (..)
 import Board.Cell as Cell
 import ChildUpdate
 import Html exposing (..)
+import Task
 
 
 -- MODEL
@@ -69,13 +70,19 @@ updateMany =
 
 type Msg
     = CellMessage Cell.Id Cell.Msg
+    | CellClicked Cell.Model Cell.DisplayType
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg layer =
     case msg of
         CellMessage id cMsg ->
-            Cell.updateMany CellMessage id cMsg layer
+            case cMsg of
+                Cell.Clicked cell dtype ->
+                    ( layer, Task.perform (CellClicked cell) (Task.succeed dtype) )
+
+        _ ->
+            ( layer, Cmd.none )
 
 
 expand : List Cell.Model -> Model -> List Model

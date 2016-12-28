@@ -1,6 +1,7 @@
 port module Main exposing (..)
 
 import Board.Board as Board
+import Board.Cell as Cell
 import Board.Rand as Rand exposing (..)
 import Board.Snake as Snake
 import Config.Config as Config
@@ -167,7 +168,12 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         BoardMessage cMsg ->
-            Board.updateOne BoardMessage cMsg model
+            case cMsg of
+                Board.CellClicked cell ->
+                    ( tryAddCell model cell, Cmd.none )
+
+                _ ->
+                    Board.updateOne BoardMessage cMsg model
 
         FocusResult error ->
             ( model, Cmd.none )
@@ -209,7 +215,17 @@ update msg model =
             )
 
         SnakeMessage cMsg ->
-            Snake.updateOne SnakeMessage cMsg model
+            case cMsg of
+                Snake.CellClicked cell dtype ->
+                    case dtype of
+                        Cell.HighlightHead ->
+                            commitWord model
+
+                        _ ->
+                            ( { model | snake = Snake.reset }, Cmd.none )
+
+                _ ->
+                    Snake.updateOne SnakeMessage cMsg model
 
         Tick time ->
             tick model time
@@ -335,6 +351,42 @@ tick model time =
                 ( model, getSize )
 
 
+tryAddCell : Model -> Cell.Model -> Model
+tryAddCell model cell =
+    case model.gameMode of
+        Waiting ->
+            { model | gameMode = Playing }
+
+        Playing ->
+            setSnake model
+                (Snake.tryAddCells model.snake cell.letter [ cell ])
+
+        _ ->
+            model
+
+
+commitWord : Model -> ( Model, Cmd Msg )
+commitWord model =
+    let
+        word =
+            model.snake.word
+
+        ( newWordList, cmd ) =
+            case Word.List.candidateStatus model.wordList word of
+                Good ->
+                    Word.List.addWord model.wordList word (Snake.findBonus model.board.layer word)
+
+                _ ->
+                    ( model.wordList, Cmd.none )
+    in
+        ( { model
+            | wordList = newWordList
+            , snake = Snake.reset
+          }
+        , Cmd.map WordListMessage cmd
+        )
+
+
 keyActionUpdate : KeyAction -> Model -> ( Model, Cmd Msg )
 keyActionUpdate keyAction model =
     case keyAction of
@@ -351,24 +403,7 @@ keyActionUpdate keyAction model =
             ( setSnake model Snake.reset, Cmd.none )
 
         Commit ->
-            let
-                word =
-                    model.snake.word
-
-                ( newWordList, cmd ) =
-                    case Word.List.candidateStatus model.wordList word of
-                        Good ->
-                            Word.List.addWord model.wordList word (Snake.bonus model.snake)
-
-                        _ ->
-                            ( model.wordList, Cmd.none )
-            in
-                ( { model
-                    | wordList = newWordList
-                    , snake = Snake.reset
-                  }
-                , Cmd.map WordListMessage cmd
-                )
+            commitWord model
 
         Undo ->
             ( setSnake model (Snake.undo model.snake), Cmd.none )

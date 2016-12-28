@@ -5,6 +5,7 @@ import Html exposing (..)
 import Board.Cell as Cell
 import Board.Layer as Layer
 import String
+import Task
 import Word.Score exposing (Bonus)
 
 
@@ -70,13 +71,22 @@ updateOne =
 
 type Msg
     = LayerMessage Layer.Index Layer.Msg
+    | CellClicked Cell.Model Cell.DisplayType
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         LayerMessage index cMsg ->
-            Layer.updateMany LayerMessage index cMsg model
+            case cMsg of
+                Layer.CellClicked cell dtype ->
+                    ( model, Task.perform (CellClicked cell) (Task.succeed dtype) )
+
+                _ ->
+                    Layer.updateMany LayerMessage index cMsg model
+
+        _ ->
+            ( model, Cmd.none )
 
 
 tryAddCells : Model -> String -> List Cell.Model -> Model

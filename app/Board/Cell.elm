@@ -3,6 +3,7 @@ module Board.Cell exposing (..)
 import ChildUpdate
 import Html exposing (..)
 import Html.Attributes exposing (class, style)
+import Html.Events exposing (onClick)
 import Routing.Shape exposing (Shape(..))
 
 
@@ -89,13 +90,13 @@ updateMany =
 
 
 type Msg
-    = NoOp
+    = Clicked Model DisplayType
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg cell =
     case msg of
-        NoOp ->
+        _ ->
             ( cell, Cmd.none )
 
 
@@ -123,52 +124,44 @@ type DisplayType
 view : DisplayType -> Model -> Html Msg
 view dtype cell =
     let
-        ( letter, icon ) =
+        letter =
             case dtype of
                 HideLetter ->
-                    ( "", " fa fa-question-circle" )
+                    ""
 
                 _ ->
-                    ( cell.letter, "" )
+                    cell.letter
     in
-        button
-            [ class ("btn" ++ icon)
-            , style (List.append (commonStyle cell) (customStyle dtype cell))
+        div
+            [ Html.Attributes.type_ "button"
+            , class ("cell " ++ customClass dtype)
+            , onClick (Clicked cell dtype)
+            , style (commonStyle cell)
             ]
             [ text letter ]
 
 
 commonStyle : Model -> List ( String, String )
 commonStyle cell =
-    [ ( "position", "absolute" )
-    , ( "left", (toString (cell.x * cell.width)) ++ "px" )
+    [ ( "left", (toString (cell.x * cell.width)) ++ "px" )
     , ( "top", (toString (cell.y * cell.width)) ++ "px" )
     , ( "font-size", (toString ((cell.width |> toFloat) * 0.6 |> round)) ++ "px" )
-    , ( "margin", "5px" )
     , ( "width", (toString (cell.width - 10)) ++ "px" )
     , ( "height", (toString (cell.width - 10)) ++ "px" )
-    , ( "color", "#036" )
-    , ( "border-radius", "20px" )
     ]
 
 
-customStyle : DisplayType -> Model -> List ( String, String )
-customStyle dtype cell =
+customClass : DisplayType -> String
+customClass dtype =
     case dtype of
         HideLetter ->
-            [ ( "color", "#d0e0f0" ) ]
+            "hide-letter fa fa-question-circle"
 
         ShowLetter ->
-            [ ( "color", "#036" ) ]
+            "show-letter"
 
         HighlightTail ->
-            [ ( "background-color", "rgba(204, 204, 204, 0.3)" )
-            , ( "border", "dashed 1px rgba(128, 128, 128, 0.5)" )
-            , ( "color", "#036" )
-            ]
+            "highlight-tail"
 
         HighlightHead ->
-            [ ( "background-color", "rgba(153, 204, 255, 0.4)" )
-            , ( "border", "solid 1px #036" )
-            , ( "color", "#036" )
-            ]
+            "highlight-head"
