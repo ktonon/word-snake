@@ -65,7 +65,7 @@ toInt score =
             score.base * score.bonus
 
         Invalid ->
-            -1
+            0
 
         Unknown ->
             0
@@ -112,7 +112,7 @@ toString score =
             score.base |> Basics.toString
 
         Invalid ->
-            "-1"
+            "0"
 
         Unknown ->
             ""
