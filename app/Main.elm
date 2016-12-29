@@ -137,7 +137,7 @@ init config location =
                 let
                     ( matrix, newSeed ) =
                         Random.initialSeed seedValue
-                            |> Random.step (Rand.board config.language shape)
+                            |> Rand.board config.language shape
                 in
                     ( { model
                         | shape = shape
