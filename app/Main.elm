@@ -273,31 +273,27 @@ updateBoardSize model =
     }
 
 
+boardSize : Config.Model -> ( Int, Int )
+boardSize conf =
+    let
+        s =
+            conf.windowSize
+    in
+        if conf.isMobile then
+            ( (s.width |> toFloat) * 0.9 |> round, s.height - 100 )
+        else
+            ( (s.width |> toFloat) * 0.58 |> round, s.height - 200 )
+
+
 cellWidth : Config.Model -> Shape -> Int
 cellWidth conf shape =
     let
-        w =
-            Shape.toWidth shape
-
-        h =
-            Shape.toHeight shape
-
-        s =
-            conf.windowSize
-
-        x =
-            if conf.isMobile then
-                (s.width |> toFloat) * 0.9 |> round
-            else
-                (s.width |> toFloat) * 0.7 |> round
-
-        y =
-            if conf.isMobile then
-                s.height - 100
-            else
-                s.height - 200
+        ( x, y ) =
+            boardSize conf
     in
-        (min (x // w) (y // h))
+        (min (x // Shape.toWidth shape)
+            (y // Shape.toHeight shape)
+        )
 
 
 refreshWords : Config.Model -> Model -> ( Model, Cmd Msg )
@@ -482,8 +478,8 @@ boardView model =
             [ class "px2" ]
             [ if model.config.isMobile then
                 div [ class "clearfix" ]
-                    [ div [ class "col col-3" ] [ timer ]
-                    , div [ class "col col-9" ] [ shuffle ]
+                    [ div [ class "col col-5" ] [ timer ]
+                    , div [ class "col col-7" ] [ shuffle ]
                     ]
               else
                 shuffle
@@ -494,8 +490,8 @@ boardView model =
                     , div [] wordList
                     ]
                  else
-                    [ div [ class "col col-3" ] wordList
-                    , div [ class "rel col col-9 mt3" ] board
+                    [ div [ class "col col-5" ] wordList
+                    , div [ class "rel col col-7 mt3" ] board
                     ]
                 )
             , Util.forkMe model.config

@@ -56,8 +56,8 @@ view isMobile share timer =
         (if isMobile then
             [ div [ class "box rounded" ] [ mobileShareView share ] ]
          else
-            [ div [ class "col col-3" ] [ timer ]
-            , div [ class "box rounded px2 col col-9" ] [ shareView share ]
+            [ div [ class "col col-5" ] [ timer ]
+            , div [ class "box rounded px2 col col-7" ] [ shareView share ]
             ]
         )
 

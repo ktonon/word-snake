@@ -31,8 +31,8 @@ view gameMode word score status timer =
             [ statusClass status
                 ("word-input clearfix " ++ (gameMode |> GameMode.toString))
             ]
-            [ div [ class "timer col col-3" ] [ timer ]
-            , div [ class "box rounded px2 col col-9" ]
+            [ div [ class "timer col col-5" ] [ timer ]
+            , div [ class "box rounded px2 col col-7" ]
                 [ text showWord
                 , div [ class "bonus right" ] (bonusView status score)
                 ]

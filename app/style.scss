@@ -47,6 +47,7 @@ body {
   }
   .timer {
     color: #ccc;
+    text-align: center;
     &.playing {
       color: black;
     }
@@ -113,11 +114,14 @@ body {
     }
   }
   input {
-    font-size: 24px;
+  font-size: 24px;
+    width: 200px;
   }
 }
 
 .word-list {
+  height: 80vh;
+  overflow-y: scroll;
   font-size: 25px;
   .header {
     border-bottom: 1px solid #333;
