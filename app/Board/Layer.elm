@@ -1,7 +1,6 @@
 module Board.Layer exposing (..)
 
 import Board.Cell as Cell
-import ChildUpdate
 import Html exposing (..)
 
 
@@ -42,40 +41,7 @@ setCellWidth w layer =
 
 
 
--- UPDATE FOR PARENT
-
-
-type alias HasOne model =
-    { model | layer : Model }
-
-
-type alias HasMany model =
-    { model | layers : List Model }
-
-
-updateOne : (Msg -> msg) -> Msg -> HasOne m -> ( HasOne m, Cmd msg )
-updateOne =
-    ChildUpdate.updateOne update .layer (\m x -> { m | layer = x })
-
-
-updateMany : (Index -> Msg -> msg) -> Index -> Msg -> HasMany m -> ( HasMany m, Cmd msg )
-updateMany =
-    ChildUpdate.updateMany update .index .layers (\m x -> { m | layers = x })
-
-
-
 -- UPDATE
-
-
-type Msg
-    = CellMessage Cell.Id Cell.Msg
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg layer =
-    case msg of
-        CellMessage cellId cellMsg ->
-            Cell.updateMany CellMessage cellId cellMsg layer
 
 
 expand : List Cell.Model -> Model -> List Model
@@ -151,17 +117,17 @@ type DisplayType
     | ShowPath
 
 
-view : DisplayType -> Model -> Html Msg
-view dtype layer =
+view : Cell.Clicked msg -> DisplayType -> Model -> Html msg
+view clicked dtype layer =
     div []
         (layer.cells
             |> List.indexedMap (,)
-            |> List.map (cellView dtype)
+            |> List.map (cellView clicked dtype)
         )
 
 
-cellView : DisplayType -> ( Int, Cell.Model ) -> Html Msg
-cellView dtype ( index, cell ) =
+cellView : Cell.Clicked msg -> DisplayType -> ( Int, Cell.Model ) -> Html msg
+cellView clicked dtype ( index, cell ) =
     let
         cellType =
             case dtype of
@@ -177,4 +143,4 @@ cellView dtype ( index, cell ) =
                     else
                         Cell.HighlightTail
     in
-        Html.map (CellMessage cell.id) (Cell.view cellType cell)
+        Cell.view clicked cellType cell

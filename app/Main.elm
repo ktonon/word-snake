@@ -2,7 +2,6 @@ port module Main exposing (..)
 
 import Board.Board as Board
 import Board.Cell as Cell
-import Board.Layer as Layer
 import Board.Rand as Rand exposing (..)
 import Board.Snake as Snake
 import Config.Config as Config
@@ -86,14 +85,13 @@ reset config =
 
 
 type Msg
-    = BoardMessage Board.Msg
+    = CellClicked Cell.Model Cell.DisplayType
     | FocusResult (Result Dom.Error ())
     | GotoBoard Shape Seed
     | KeyDown KeyCode
     | LoadConfig Json.Encode.Value
     | ShareMsg Share.Msg
     | Shuffle SizeChange
-    | SnakeMessage Snake.Msg
     | Tick Time
     | UrlChange Navigation.Location
     | WordListMessage Word.List.Msg
@@ -168,14 +166,19 @@ init config location =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        BoardMessage boardMsg ->
-            case boardMsg of
-                Board.LayerMessage layerMsg ->
-                    case layerMsg of
-                        Layer.CellMessage cellId cellMsg ->
-                            case cellMsg of
-                                Cell.Clicked cell _ ->
-                                    ( tryAddCell model cell, Cmd.none )
+        CellClicked cell displayType ->
+            case displayType of
+                Cell.HideLetter ->
+                    ( { model | gameMode = Playing }, Cmd.none )
+
+                Cell.ShowLetter ->
+                    ( tryAddCell model cell, Cmd.none )
+
+                Cell.HighlightHead ->
+                    commitWord model
+
+                Cell.HighlightTail ->
+                    ( { model | snake = Snake.reset }, Cmd.none )
 
         FocusResult error ->
             ( model, Cmd.none )
@@ -215,20 +218,6 @@ update msg model =
                 |> Shuffle.changeShape model.shape
                 |> Routing.randomPlayUrl
             )
-
-        SnakeMessage snakeMsg ->
-            case snakeMsg of
-                Snake.LayerMessage _ layerMsg ->
-                    case layerMsg of
-                        Layer.CellMessage _ cellMsg ->
-                            case cellMsg of
-                                Cell.Clicked _ dtype ->
-                                    case dtype of
-                                        Cell.HighlightHead ->
-                                            commitWord model
-
-                                        _ ->
-                                            ( { model | snake = Snake.reset }, Cmd.none )
 
         Tick time ->
             tick model time
@@ -476,8 +465,8 @@ boardView : Model -> Html Msg
 boardView model =
     let
         board =
-            [ Html.map BoardMessage (Board.view model.gameMode model.board)
-            , Html.map SnakeMessage (Snake.view model.snake)
+            [ Board.view CellClicked model.gameMode model.board
+            , Snake.view CellClicked model.snake
             ]
 
         shuffle =

@@ -1,6 +1,5 @@
 module Board.Board exposing (..)
 
-import ChildUpdate exposing (updateOne)
 import GameMode exposing (GameMode(..))
 import Html exposing (..)
 import Html.Attributes exposing (style)
@@ -85,39 +84,11 @@ findCells board letter =
 
 
 
--- UPDATE FOR PARENT
-
-
-type alias HasOne model =
-    { model | board : Model }
-
-
-updateOne : (Msg -> msg) -> Msg -> HasOne m -> ( HasOne m, Cmd msg )
-updateOne =
-    ChildUpdate.updateOne update .board (\m x -> { m | board = x })
-
-
-
--- UPDATE
-
-
-type Msg
-    = LayerMessage Layer.Msg
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg board =
-    case msg of
-        LayerMessage cMsg ->
-            Layer.updateOne LayerMessage cMsg board
-
-
-
 -- VIEW
 
 
-view : GameMode -> Model -> Html Msg
-view gameMode board =
+view : Cell.Clicked msg -> GameMode -> Model -> Html msg
+view clicked gameMode board =
     let
         ( w, h ) =
             case board.shape of
@@ -140,4 +111,4 @@ view gameMode board =
                 , ( "height", h ++ "px" )
                 ]
             ]
-            [ Html.map LayerMessage (Layer.view displayType board.layer) ]
+            [ Layer.view clicked displayType board.layer ]

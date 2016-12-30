@@ -1,6 +1,5 @@
 module Board.Snake exposing (..)
 
-import ChildUpdate
 import Html exposing (..)
 import Board.Cell as Cell
 import Board.Layer as Layer
@@ -52,31 +51,7 @@ findBonus layer =
 
 
 
--- UPDATE FOR PARENT
-
-
-type alias HasOne model =
-    { model | snake : Model }
-
-
-updateOne : (Msg -> msg) -> Msg -> HasOne m -> ( HasOne m, Cmd msg )
-updateOne =
-    ChildUpdate.updateOne update .snake (\m x -> { m | snake = x })
-
-
-
 -- UPDATE
-
-
-type Msg
-    = LayerMessage Layer.Index Layer.Msg
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        LayerMessage index cMsg ->
-            Layer.updateMany LayerMessage index cMsg model
 
 
 tryAddCells : Model -> String -> List Cell.Model -> Model
@@ -119,11 +94,6 @@ undo model =
 -- VIEW
 
 
-view : Model -> Html Msg
-view model =
-    div [] (List.map viewLayer model.layers)
-
-
-viewLayer : Layer.Model -> Html Msg
-viewLayer layer =
-    div [] [ Html.map (LayerMessage layer.index) (Layer.view Layer.ShowPath layer) ]
+view : Cell.Clicked msg -> Model -> Html msg
+view clicked model =
+    div [] (List.map (Layer.view clicked Layer.ShowPath) model.layers)

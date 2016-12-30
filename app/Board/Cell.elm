@@ -1,6 +1,5 @@
 module Board.Cell exposing (..)
 
-import ChildUpdate
 import Html exposing (..)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
@@ -73,31 +72,7 @@ inBoundId shape ( x, y ) =
 
 
 
--- UPDATE FOR PARENT
-
-
-type alias HasMany model =
-    { model | cells : List Model }
-
-
-updateMany : (Id -> Msg -> msg) -> Id -> Msg -> HasMany m -> ( HasMany m, Cmd msg )
-updateMany =
-    ChildUpdate.updateMany update .id .cells (\m x -> { m | cells = x })
-
-
-
 -- UPDATE
-
-
-type Msg
-    = Clicked Model DisplayType
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg cell =
-    case msg of
-        _ ->
-            ( cell, Cmd.none )
 
 
 isAdjacent : Model -> Maybe Model -> Bool
@@ -121,8 +96,12 @@ type DisplayType
     | HighlightTail
 
 
-view : DisplayType -> Model -> Html Msg
-view dtype cell =
+type alias Clicked msg =
+    Model -> DisplayType -> msg
+
+
+view : Clicked msg -> DisplayType -> Model -> Html msg
+view clickedMsg dtype cell =
     let
         letter =
             case dtype of
@@ -135,7 +114,7 @@ view dtype cell =
         div
             [ Html.Attributes.type_ "button"
             , class ("cell " ++ customClass dtype)
-            , onClick (Clicked cell dtype)
+            , onClick (clickedMsg cell dtype)
             , style (commonStyle cell)
             ]
             [ text letter ]
