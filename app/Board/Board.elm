@@ -8,7 +8,6 @@ import Board.Cell as Cell
 import Board.Layer as Layer exposing (DisplayType(..))
 import List.Split exposing (chunksOfLeft)
 import Routing.Shape exposing (Shape(..))
-import Task
 
 
 -- MODEL
@@ -104,22 +103,13 @@ updateOne =
 
 type Msg
     = LayerMessage Layer.Msg
-    | CellClicked Cell.Model
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg board =
     case msg of
         LayerMessage cMsg ->
-            case cMsg of
-                Layer.CellClicked cell _ ->
-                    ( board, Task.perform CellClicked (Task.succeed cell) )
-
-                _ ->
-                    Layer.updateOne LayerMessage cMsg board
-
-        _ ->
-            ( board, Cmd.none )
+            Layer.updateOne LayerMessage cMsg board
 
 
 

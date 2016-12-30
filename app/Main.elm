@@ -2,6 +2,7 @@ port module Main exposing (..)
 
 import Board.Board as Board
 import Board.Cell as Cell
+import Board.Layer as Layer
 import Board.Rand as Rand exposing (..)
 import Board.Snake as Snake
 import Config.Config as Config
@@ -167,13 +168,14 @@ init config location =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        BoardMessage cMsg ->
-            case cMsg of
-                Board.CellClicked cell ->
-                    ( tryAddCell model cell, Cmd.none )
-
-                _ ->
-                    Board.updateOne BoardMessage cMsg model
+        BoardMessage boardMsg ->
+            case boardMsg of
+                Board.LayerMessage layerMsg ->
+                    case layerMsg of
+                        Layer.CellMessage cellId cellMsg ->
+                            case cellMsg of
+                                Cell.Clicked cell _ ->
+                                    ( tryAddCell model cell, Cmd.none )
 
         FocusResult error ->
             ( model, Cmd.none )
@@ -214,18 +216,19 @@ update msg model =
                 |> Routing.randomPlayUrl
             )
 
-        SnakeMessage cMsg ->
-            case cMsg of
-                Snake.CellClicked cell dtype ->
-                    case dtype of
-                        Cell.HighlightHead ->
-                            commitWord model
+        SnakeMessage snakeMsg ->
+            case snakeMsg of
+                Snake.LayerMessage _ layerMsg ->
+                    case layerMsg of
+                        Layer.CellMessage _ cellMsg ->
+                            case cellMsg of
+                                Cell.Clicked _ dtype ->
+                                    case dtype of
+                                        Cell.HighlightHead ->
+                                            commitWord model
 
-                        _ ->
-                            ( { model | snake = Snake.reset }, Cmd.none )
-
-                _ ->
-                    Snake.updateOne SnakeMessage cMsg model
+                                        _ ->
+                                            ( { model | snake = Snake.reset }, Cmd.none )
 
         Tick time ->
             tick model time
