@@ -143,12 +143,16 @@ view dtype cell =
 
 commonStyle : Model -> List ( String, String )
 commonStyle cell =
-    [ ( "left", (toString (cell.x * cell.width)) ++ "px" )
-    , ( "top", (toString (cell.y * cell.width)) ++ "px" )
-    , ( "font-size", (toString ((cell.width |> toFloat) * 0.6 |> round)) ++ "px" )
-    , ( "width", (toString (cell.width - 10)) ++ "px" )
-    , ( "height", (toString (cell.width - 10)) ++ "px" )
-    ]
+    let
+        spacing =
+            2
+    in
+        [ ( "left", (toString (cell.x * cell.width)) ++ "px" )
+        , ( "top", (toString (cell.y * cell.width)) ++ "px" )
+        , ( "font-size", (toString ((cell.width |> toFloat) * 0.7 |> round)) ++ "px" )
+        , ( "width", (toString (cell.width - spacing)) ++ "px" )
+        , ( "height", (toString (cell.width - spacing)) ++ "px" )
+        ]
 
 
 customClass : DisplayType -> String

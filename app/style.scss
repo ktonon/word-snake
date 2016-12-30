@@ -60,10 +60,9 @@ body {
 }
 
 .cell {
-  border-radius: 20px;
+  border-radius: 5px;
   color: #036;
   cursor: pointer;
-  margin: 5px;
   position: absolute;
   text-align: center;
   &.hide-letter {
@@ -74,7 +73,7 @@ body {
   }
   &.highlight-tail {
     background-color: rgba(204, 204, 204, 0.3);
-    border: dashed 1px rgba(128, 128, 128, 0.5);
+    border: solid 1px rgba(64, 64, 64, 0.3);
     color: #036;
   }
   &.highlight-head {
