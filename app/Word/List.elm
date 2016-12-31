@@ -25,8 +25,8 @@ type alias Model =
 
 
 reset : String -> Model
-reset apiEndpoint =
-    Model (Eng.Config apiEndpoint) []
+reset dictionaryApiEndpoint =
+    Model (Eng.Config dictionaryApiEndpoint) []
 
 
 
@@ -147,10 +147,10 @@ addWord model text bonus =
 
 
 validate : String -> (String -> Bonus) -> Model -> ( Model, Cmd Msg )
-validate apiEndpoint bonusFinder model =
+validate dictionaryApiEndpoint bonusFinder model =
     let
         engConfig =
-            Eng.Config apiEndpoint
+            Eng.Config dictionaryApiEndpoint
 
         ( newWords, cmds ) =
             model.words

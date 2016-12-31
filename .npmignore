@@ -1,0 +1,7 @@
+# package directories
+elm-stuff
+node_modules
+jspm_packages
+
+# Serverless directories
+.serverless

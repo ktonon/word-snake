@@ -8,7 +8,6 @@ type GameMode
     | Waiting
     | Playing
     | Reviewing
-    | Comparing
 
 
 toString : GameMode -> String
@@ -25,6 +24,3 @@ toString gameMode =
 
         Reviewing ->
             "reviewing"
-
-        Comparing ->
-            "comparing"

@@ -84,9 +84,6 @@ view gameMode timer =
                 Reviewing ->
                     0
 
-                Comparing ->
-                    0
-
                 _ ->
                     (timer.timeAllowed - timer.timeElapsed)
                         / 1000

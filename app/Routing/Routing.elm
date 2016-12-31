@@ -1,6 +1,7 @@
 module Routing.Routing exposing (..)
 
 import Board.Rand as Rand exposing (..)
+import Challenge.Challenge as Challenge exposing (..)
 import Dom
 import Navigation
 import Routing.Shape as Shape exposing (..)
@@ -14,6 +15,7 @@ type Route
     | RandomPlayRoute Shape
     | PlayRoute Shape Seed
     | ReviewRoute Token
+    | ChallengeRoute Challenge.Id
 
 
 randomPlayUrl : Shape -> Cmd msg
@@ -42,10 +44,18 @@ reviewUrl focusHandler token =
         ]
 
 
+challengeUrl : Challenge.Id -> Cmd msg
+challengeUrl id =
+    "#play/"
+        ++ id
+        |> Navigation.newUrl
+
+
 route : Parser (Route -> a) a
 route =
     oneOf
-        [ map PlayRoute (s "play" </> Shape.parser </> int)
+        [ map ChallengeRoute (s "play" </> Challenge.idParser)
+        , map PlayRoute (s "play" </> Shape.parser </> int)
         , map RandomPlayRoute (s "play" </> Shape.parser)
         , map (RandomPlayRoute Shape.default) (s "play")
         , map (RandomPlayRoute Shape.default) UrlParser.top

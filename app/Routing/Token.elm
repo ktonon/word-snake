@@ -22,11 +22,8 @@ type alias Token =
 toPathComponent : Token -> String
 toPathComponent token =
     case
-        J.object
-            [ ( "b", J.string token.board )
-            , ( "s", J.string (token.shape |> Shape.toPathComponent) )
-            , ( "w", Word.List.toJsonValue token.words )
-            ]
+        token
+            |> encoder
             |> J.encode 0
             |> Base64.encode
     of
@@ -35,6 +32,15 @@ toPathComponent token =
 
         _ ->
             "error"
+
+
+encoder : Token -> D.Value
+encoder token =
+    J.object
+        [ ( "b", J.string token.board )
+        , ( "s", J.string (token.shape |> Shape.toPathComponent) )
+        , ( "w", Word.List.toJsonValue token.words )
+        ]
 
 
 decoder : D.Decoder Token

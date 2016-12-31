@@ -1,0 +1,44 @@
+service: wordsnake
+
+frameworkVersion: "=1.4.0"
+
+plugins:
+  - serverless-plugin-include-dependencies
+
+provider:
+  name: aws
+  runtime: nodejs4.3
+  stage: dev
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:GetItem"
+        - "dynamodb:PutItem"
+        - "dynamodb:UpdateItem"
+      Resource:
+        - "*"
+
+package:
+  individually: true
+  include:
+    - api/**
+  exclude:
+    - app/**
+    - elm-stuff/**
+    - node_modules/**
+    - public/**
+    - scripts/**
+
+functions:
+  api:
+    handler: api.handler
+    events:
+      - http:
+          integration: lambda-proxy
+          path: /
+          method: ANY
+      - http:
+          integration: lambda-proxy
+          path: /{any+}
+          method: ANY

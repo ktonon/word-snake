@@ -1,21 +1,26 @@
 module Share exposing (..)
 
+import Challenge.Challenge as Challenge exposing (..)
 import ChildUpdate
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick, onInput)
+import Routing.Token as Token exposing (..)
+import Task
 
 
 -- MODEL
 
 
 type alias Share =
-    { username : String
+    { player : String
+    , challengeId : String
     }
 
 
 reset : Share
 reset =
-    Share ""
+    Share "" ""
 
 
 
@@ -26,9 +31,9 @@ type alias HasOne model =
     { model | share : Share }
 
 
-updateOne : (Msg -> msg) -> Msg -> HasOne m -> ( HasOne m, Cmd msg )
-updateOne =
-    ChildUpdate.updateOne update .share (\m x -> { m | share = x })
+updateOne : ( String, Int, Token ) -> (Msg -> msg) -> Msg -> HasOne m -> ( HasOne m, Cmd msg )
+updateOne extra =
+    ChildUpdate.updateOne (update extra) .share (\m x -> { m | share = x })
 
 
 
@@ -37,13 +42,31 @@ updateOne =
 
 type Msg
     = Challenge
+    | ChallengeResult (Result Challenge.Error Challenge)
+    | UpdatePlayer String
 
 
-update : Msg -> Share -> ( Share, Cmd Msg )
-update msg model =
+update : ( String, Int, Token ) -> Msg -> Share -> ( Share, Cmd Msg )
+update ( apiEndpoint, score, token ) msg model =
     case msg of
         Challenge ->
-            ( model, Cmd.none )
+            ( model
+            , Challenge.create
+                apiEndpoint
+                ( model.player, score, token )
+                |> Task.attempt ChallengeResult
+            )
+
+        ChallengeResult r ->
+            case r of
+                Ok challenge ->
+                    ( { model | challengeId = challenge.id }, Cmd.none )
+
+                Err err ->
+                    ( model, Cmd.none )
+
+        UpdatePlayer name ->
+            ( { model | player = name }, Cmd.none )
 
 
 
@@ -52,40 +75,57 @@ update msg model =
 
 view : Bool -> Share -> Html Msg -> Html Msg
 view isMobile share timer =
-    div [ class "share clearfix" ]
-        (if isMobile then
-            [ div [ class "box rounded" ] [ mobileShareView share ] ]
-         else
-            [ div [ class "col col-5" ] [ timer ]
-            , div [ class "box rounded px2 col col-7" ] [ shareView share ]
-            ]
-        )
+    let
+        parts =
+            ( [ div [] [ text "Enter your name" ]
+              , input
+                    [ id "username"
+                    , onInput UpdatePlayer
+                    , type_ "text"
+                    ]
+                    []
+              ]
+            , [ challengeButton share
+              , if String.isEmpty share.challengeId then
+                    span [] []
+                else
+                    input [ value share.challengeId ] []
+              ]
+            )
+    in
+        div [ class "share clearfix" ]
+            (if isMobile then
+                [ div [ class "box rounded" ] [ mobileShareView share parts ] ]
+             else
+                [ div [ class "col col-5" ] [ timer ]
+                , div [ class "box rounded px2 col col-7" ] [ shareView share parts ]
+                ]
+            )
 
 
-shareView : Share -> Html Msg
-shareView share =
+challengeButton : Share -> Html Msg
+challengeButton share =
+    let
+        attr =
+            if share.player |> String.isEmpty then
+                [ class "button disabled" ]
+            else
+                [ class "button", onClick Challenge ]
+    in
+        a attr [ text "Challenge a friend" ]
+
+
+shareView : Share -> ( List (Html Msg), List (Html Msg) ) -> Html Msg
+shareView share ( player, challenge ) =
     div [ class "clearfix" ]
-        [ div [ class "col col-5" ]
-            [ div [] [ text "Enter your name" ]
-            , input [ id "username", type_ "text" ] []
-            ]
+        [ div [ class "col col-5" ] player
         , div [ class "col col-2" ]
             [ div [ class "chevron fa fa-chevron-right" ] []
             ]
-        , div [ class "col col-5" ]
-            [ div [] [ text "Challenge a friend" ]
-            , div [ class "gray coming-soon" ]
-                [ text "Coming soon..."
-                ]
-            ]
+        , div [ class "col col-5" ] challenge
         ]
 
 
-mobileShareView : Share -> Html Msg
-mobileShareView share =
-    div []
-        [ div [] [ text "Enter your name" ]
-        , input [ id "username", type_ "text" ] []
-        , div [] [ text "Challenge a friend" ]
-        , div [ class "gray coming-soon" ] [ text "Coming soon..." ]
-        ]
+mobileShareView : Share -> ( List (Html Msg), List (Html Msg) ) -> Html Msg
+mobileShareView share ( player, challenge ) =
+    div [] (List.concat [ player, challenge ])

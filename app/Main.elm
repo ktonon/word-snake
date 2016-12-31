@@ -4,6 +4,7 @@ import Board.Board as Board
 import Board.Cell as Cell
 import Board.Rand as Rand exposing (..)
 import Board.Snake as Snake
+import Challenge.Challenge as Challenge exposing (..)
 import Config.Config as Config
 import Dom
 import GameMode exposing (..)
@@ -32,9 +33,9 @@ import Word.Score as Score
 import Window
 
 
-main : Program Never Model Msg
+main : Program Config.Endpoints Model Msg
 main =
-    Navigation.program UrlChange
+    Navigation.programWithFlags UrlChange
         { init = init Config.empty
         , update = update
         , view = view
@@ -49,6 +50,7 @@ main =
 type alias Model =
     { config : Config.Model
     , configError : String
+    , challenge : Maybe Challenge
     , board : Board.Model
     , gameMode : GameMode
     , seed : Random.Seed
@@ -70,6 +72,7 @@ reset config =
     Model
         config
         ""
+        Nothing
         (Board.reset Shape.default (cellWidth config Shape.default) [])
         Loading
         (Random.initialSeed 0)
@@ -77,7 +80,7 @@ reset config =
         Share.reset
         Snake.reset
         (Timer.reset Shape.default)
-        (Word.List.reset config.apiEndpoint)
+        (Word.List.reset config.endpoints.dictionaryApi)
 
 
 
@@ -86,6 +89,7 @@ reset config =
 
 type Msg
     = CellClicked Cell.Model Cell.DisplayType
+    | ChallengeResult (Result Challenge.Error Challenge)
     | FocusResult (Result Dom.Error ())
     | GotoBoard Shape Seed
     | KeyDown KeyCode
@@ -98,11 +102,11 @@ type Msg
     | WindowSize (Result String Window.Size)
 
 
-init : Config.Model -> Navigation.Location -> ( Model, Cmd Msg )
-init config location =
+init : Config.Model -> Config.Endpoints -> Navigation.Location -> ( Model, Cmd Msg )
+init config endpoints location =
     let
         model =
-            reset config
+            reset (Config.setEndpoints endpoints config)
 
         route =
             Routing.routeFromLocation location
@@ -151,6 +155,12 @@ init config location =
                         |> Cmd.batch
                     )
 
+            ChallengeRoute id ->
+                ( model
+                , Challenge.get endpoints.api id
+                    |> Task.attempt ChallengeResult
+                )
+
             ReviewRoute token ->
                 refreshWords model.config
                     (updateBoardSize
@@ -180,6 +190,22 @@ update msg model =
                 Cell.HighlightTail ->
                     ( { model | snake = Snake.reset }, Cmd.none )
 
+        ChallengeResult r ->
+            case r of
+                Ok challenge ->
+                    ( updateBoardSize
+                        { model
+                            | board = Board.fromToken challenge.shape challenge.board
+                            , challenge = Just challenge
+                            , shape = challenge.shape
+                            , gameMode = Waiting
+                        }
+                    , Cmd.none
+                    )
+
+                Err err ->
+                    ( model, Cmd.none )
+
         FocusResult error ->
             ( model, Cmd.none )
 
@@ -200,7 +226,7 @@ update msg model =
         LoadConfig data ->
             let
                 result =
-                    decodeValue Config.decoder data
+                    decodeValue (Config.decoder model.config.endpoints) data
             in
                 case result of
                     Ok config ->
@@ -210,7 +236,11 @@ update msg model =
                         ( { model | configError = err }, Cmd.none )
 
         ShareMsg shareMsg ->
-            Share.updateOne ShareMsg shareMsg model
+            Share.updateOne
+                ( model.config.endpoints.api, model.wordList |> Word.List.totalScore, model |> toToken )
+                ShareMsg
+                shareMsg
+                model
 
         Shuffle change ->
             ( model
@@ -223,7 +253,7 @@ update msg model =
             tick model time
 
         UrlChange location ->
-            init model.config location
+            init model.config model.config.endpoints location
 
         WordListMessage cMsg ->
             case cMsg of
@@ -301,7 +331,7 @@ refreshWords config model =
     let
         ( newWordList, cmd ) =
             Word.List.validate
-                config.apiEndpoint
+                config.endpoints.dictionaryApi
                 (Snake.findBonus model.board.layer)
                 model.wordList
     in
@@ -314,6 +344,14 @@ refreshWords config model =
             , Task.attempt WindowSize Window.size
             ]
         )
+
+
+toToken : Model -> Token
+toToken model =
+    Token
+        (model.board |> Board.toToken)
+        model.shape
+        model.wordList
 
 
 tick : Model -> Time -> ( Model, Cmd Msg )
@@ -333,10 +371,8 @@ tick model time =
                             | timer = Timer.zero
                             , gameMode = Reviewing
                           }
-                        , Token
-                            (model.board |> Board.toToken)
-                            model.shape
-                            model.wordList
+                        , model
+                            |> toToken
                             |> Routing.reviewUrl FocusResult
                         )
                     else
@@ -448,9 +484,6 @@ view model =
         [ case model.gameMode of
             Loading ->
                 h1 [ class "m4" ] [ text "Loading..." ]
-
-            Comparing ->
-                h1 [ class "m4" ] [ text "Comparing..." ]
 
             _ ->
                 boardView model

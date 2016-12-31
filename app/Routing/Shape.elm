@@ -10,19 +10,6 @@ import UrlParser exposing (..)
 -- MODEL
 
 
-type Route
-    = BlogList (Maybe String) (Maybe String)
-    | BlogPost Int
-
-
-route : Parser (Route -> a) a
-route =
-    oneOf
-        [ map BlogList (s "blog" <?> stringParam "search" <?> stringParam "page")
-        , map BlogPost (s "blog" </> int)
-        ]
-
-
 type Shape
     = Shape Int Int
 

@@ -8,8 +8,14 @@ import Window
 -- MODEL
 
 
+type alias Endpoints =
+    { api : String
+    , dictionaryApi : String
+    }
+
+
 type alias Model =
-    { apiEndpoint : String
+    { endpoints : Endpoints
     , isMobile : Bool
     , language : Lang
     , forkMe : Maybe String
@@ -19,7 +25,7 @@ type alias Model =
 
 empty : Model
 empty =
-    Model ""
+    Model (Endpoints "" "")
         False
         Lang.default
         Nothing
@@ -27,8 +33,13 @@ empty =
 
 
 isEmpty : Model -> Bool
-isEmpty =
-    .apiEndpoint >> String.isEmpty
+isEmpty model =
+    model.endpoints.api |> String.isEmpty
+
+
+setEndpoints : Endpoints -> Model -> Model
+setEndpoints endpoints model =
+    { model | endpoints = endpoints }
 
 
 setWindowSize : Window.Size -> Model -> Model
@@ -41,10 +52,10 @@ sizeDidChange size model =
     size.width /= model.windowSize.width || size.height /= model.windowSize.height
 
 
-decoder : D.Decoder Model
-decoder =
+decoder : Endpoints -> D.Decoder Model
+decoder endpoints =
     D.map5 Model
-        (at [ "apiEndpoint" ] D.string)
+        (D.succeed endpoints)
         (at [ "isMobile" ] D.bool)
         (at [ "language" ] Lang.decoder)
         (D.maybe <| at [ "forkMe" ] D.string)
