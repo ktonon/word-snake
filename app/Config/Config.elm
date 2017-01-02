@@ -10,6 +10,7 @@ import Window
 
 type alias Endpoints =
     { api : String
+    , app : String
     , dictionaryApi : String
     }
 
@@ -25,7 +26,7 @@ type alias Model =
 
 empty : Model
 empty =
-    Model (Endpoints "" "")
+    Model (Endpoints "" "" "")
         False
         Lang.default
         Nothing

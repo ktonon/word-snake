@@ -535,7 +535,7 @@ headerView : Model -> Html Share.Msg -> Html Share.Msg
 headerView model timerView =
     case model.gameMode of
         Reviewing ->
-            Share.view model.config.isMobile model.share timerView
+            Share.view model.config model.share timerView
 
         _ ->
             if model.config.isMobile then

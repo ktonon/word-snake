@@ -16,10 +16,7 @@ font.setAttribute('rel', 'stylesheet');
 doc.head.appendChild(font);
 
 const mountNode = doc.getElementById('main');
-const app = Elm.Main.embed(mountNode, {
-  api: config.apiEndpoint,
-  dictionaryApi: config.dictionaryApiEndpoint,
-});
+const app = Elm.Main.embed(mountNode, config.endpoints);
 
 setTimeout(() =>
   app.ports.config.send(config),

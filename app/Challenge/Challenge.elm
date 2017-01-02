@@ -38,6 +38,12 @@ type Error
     | Error String
 
 
+hasPlayer : Challenge -> String -> Bool
+hasPlayer challenge player =
+    challenge.results
+        |> List.any (\r -> r.player == player)
+
+
 idParser : Parser (Id -> a) a
 idParser =
     UrlParser.custom "CHALLENGE_ID"

@@ -3,8 +3,11 @@ const path = require('path');
 const rc = require('rc');
 
 const conf = rc('wordSnake', {
-  apiEndpoint: 'http://localhost:6413',
-  dictionaryApiEndpoint: 'http://localhost:7631',
+  endpoints: {
+    api: 'http://localhost:6413',
+    app: 'http://localhost:8080',
+    dictionaryApi: 'http://localhost:7631',
+  },
   language: 'en',
 });
 
